@@ -7,9 +7,6 @@ Require Export Coq.Sorting.Mergesort Sorted SortLists.
 
 Section Match.
 
-Lemma liaforrun (b a : order): 
-oquantity b < oquantity a -> 
-~ (oquantity a - oquantity b < 1). lia. Qed.
 
 Equations Match (B A: list order): 
 (list transaction) by wf ((length B) + (length A)) :=  
@@ -244,6 +241,10 @@ Proof. unfold Matching. unfold admissible.
 intros.  split. apply Match_Tvalid. all:auto. split. intros.
  apply Match_Qty_bid. all:auto. intros. apply Match_Qty_ask. all:auto. Qed. 
 
+
+
+
+
 (* Fair properties of Match *)
 
 Lemma Match_Fair_ask_head B A a a':
@@ -305,72 +306,6 @@ assert(HaS: forall x, In x A -> (Nat.leb (oprice a) (oprice x))). apply Sorted_o
 apply HaS in H as H2.  move /leP in H2. move /eqP in price. Abort.
 
 
-Lemma Match_Fair_ask1 B A:
-NoDup (ids (B)) -> NoDup (ids A) -> Sorted acompetitive A -> 
-Is_fair_asks (Match B A) A.
-Proof. apply Match_elim. 
-- firstorder. 
-- firstorder.
-- simpl. unfold Is_fair_asks. intros b B0 a A0 H H0 H2 ndb SortB. assert(H1:=H2). intros. 
-assert(HbS: forall x, In x A0 -> (acompetitive a x)). apply Sorted_ointroA_tight. auto.
-destruct H5 as [H5 H6]. destruct H6 as [H6 H7]. destruct H7 as [H7 H8].
-destruct (oprice a - oprice b =? 0) eqn:price.
-{ destruct (lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:f1. 
-  { destruct s eqn:f2.
-    { specialize (H s). specialize (H l). simpl. destruct H5;destruct H6.
-      { subst. destruct H7 as [H6a H6b]. apply acompetitive_contadiction in H6a. inversion H6a. all:auto. }
-      { simpl in H8. destruct H8. 
-        - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-        - subst a0. replace (id a =? id a) with true. rewrite Qty_ask_t_zero. intro. apply NoDup_cons_iff in H3.
-        destruct H3. destruct H3. apply Match_Subset_A in H5. auto. lia. auto.
-      }
-      { subst a'. destruct H7 as [H6a H6b]. specialize (HbS a0). apply HbS in H5. 
-        apply acompetitive_contadiction in H5. inversion H5. all:auto.  }
-      { simpl in H8. destruct H8. 
-        - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-        - destruct (id a =? id a0) eqn: Ha. move /eqP in Ha. apply ids_intro in H5. rewrite <- Ha in H5. 
-          apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto. apply H with (a':=a'). eauto.
-           all:auto. eauto. 
-          apply Sorted_inv in H4. apply H4. }
-    }
-    { simpl. destruct H5;destruct H6.
-      { subst. destruct H7 as [H6a H6b]. apply acompetitive_contadiction in H6a. inversion H6a. all:auto. }
-      { simpl in H8. destruct H8. 
-        - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-        - subst a0. replace (id a =? id a) with true. rewrite Qty_ask_t_zero. intro. apply NoDup_cons_iff in H3.
-        destruct H3. destruct H3. apply Match_Subset_A in H5. auto. lia. auto.
-      }
-      { subst a'. destruct H7 as [H6a H6b]. specialize (HbS a0). apply HbS in H5. 
-        apply acompetitive_contadiction in H5. inversion H5. all:auto.  }
-      { simpl in H8. destruct H8. 
-        - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-        - destruct (id a =? id a0) eqn: Ha. move /eqP in Ha. apply ids_intro in H5. rewrite <- Ha in H5. 
-          apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto. apply H0 with (a':=a'). all:auto. eauto.
-           eauto. apply Sorted_inv in H4. apply H4. }
-    }
-  }
-  { simpl. destruct H5;destruct H6.
-     { subst. destruct H7 as [H6a H6b]. apply acompetitive_contadiction in H6a. inversion H6a. all:auto. }
-     { simpl in H8. destruct H8. 
-       - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-       - subst a0. replace (id a =? id a) with true. rewrite (Match_Fair_ask_head B0 A0 _ a'). all:simpl;auto.
-         eauto. apply SortedreducedA with (a:=a). all:simpl;auto. admit. lia.
-      }
-      { subst a'. destruct H7 as [H6a H6b]. specialize (HbS a0). apply HbS in H5. 
-        apply acompetitive_contadiction in H5. inversion H5. all:auto.  }
-      { simpl in H8. destruct H8. 
-        - apply ids_intro in H6. rewrite <- H8 in H6. apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto.
-        - destruct (id a =? id a0) eqn: Ha. move /eqP in Ha. apply ids_intro in H5. rewrite <- Ha in H5. 
-          apply NoDup_cons_iff in H3. destruct H3. destruct H3. auto. apply H1 with (a':=a'). all:auto. eauto.
-          apply SortedreducedA with (a:=a). all:simpl;auto. 
-      }
-  }
-} assert(HaS: forall x, In x A0 -> (Nat.leb (oprice a) (oprice x))). apply Sorted_ointroA. auto.
-assert(HbS': forall x, In x B0 -> (Nat.leb (oprice x) (oprice b))). apply Sorted_ointroB. auto.
- assert(~matchable (b :: B0) A0). intro. unfold matchable in H9. destruct H9 as [b0 H9].
-destruct H9 as [a0' H9]. destruct H9. destruct H10. simpl in H10. destruct H10. apply HaS in H9.
-move /leP in H9. unfold tradable in H11. subst b0. move /eqP in price. lia. 
-apply HaS in H9. all:admit. Admitted.
 
 Lemma Match_Fair_ask B A:
 NoDup (ids (B)) -> Sorted bcompetitive B -> NoDup (ids A) -> Sorted acompetitive A -> 
@@ -539,5 +474,152 @@ Lemma Match_Fair_on_Asks B A:
 admissible B A /\ Sorted bcompetitive B /\ Sorted acompetitive A -> Is_fair_asks (Match B A) A.
 Proof. intros. apply Match_Fair_ask. all:apply H. Qed.
 
+Definition t0:= Mk_transaction 0 0 0 1 not1.
+
+
+Lemma last_head (M:list transaction)(m:transaction):
+last (m::M) t0 = m\/last (m::M) t0 = last M t0.
+Proof. revert m. induction M. simpl. auto. intros. right. 
+simpl. case M. auto. intros. auto. Qed.
+
+
+Lemma Match_priceB B A t:
+NoDup (ids (B)) -> Sorted bcompetitive B -> NoDup (ids A) -> Sorted acompetitive A -> 
+In t (Match B A) -> tprice (last (Match B A) t0) <= price B (idb t).
+Proof. revert t. apply Match_elim. 
+- firstorder. 
+- firstorder.
+- simpl. intros b B0 a A0 H H0 H1 H2 t ndb SortB nda SortA. intros.
+assert(HbS: forall x, In x B0 -> (Nat.leb (oprice x) (oprice b))). apply Sorted_ointroB. auto.
+assert(HaS: forall x, In x A0 -> (Nat.leb (oprice a) (oprice x))). apply Sorted_ointroA. auto.
+destruct (oprice a - oprice b =? 0) eqn:price.
+{ destruct (lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:f1. 
+  { destruct s eqn:f2.
+    { specialize (H s). specialize (H l). simpl in H3. destruct H3.
+      { subst. match goal with |[ |- context[(tprice (last (?x::?y) t0) <= _ )] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id b =? id b) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l0) t0)) with (tprice (last (t :: l0) t0)). assert(In t (t::l0)). auto.
+        rewrite <- HM in H3. subst M0. apply H in H3 as H3a. 
+        cut((if id b =? idb t then oprice b else Definitions.price B0 (idb t)) <= (if id b =? idb m0 then oprice b 
+        else
+        Definitions.price B0 (idb m0))). rewrite <- HM. lia. simpl. replace (id b =? id b) with true. 
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+            destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+            rewrite H5. rewrite H5 in H3a. simpl in H4. destruct H4. 
+            + replace (id b =? id b0) with true. auto. subst b0. simpl. auto. 
+            + replace (id b =? id b0) with false. rewrite price_elim1. split. auto. eauto. move /eqP in price. 
+              apply HbS in H4 as H5b. move /leP in H5b. auto. symmetry. apply /eqP. intro. apply ids_intro in H4.
+              rewrite <- H10 in H4. apply nodup_elim2 in ndb. firstorder. 
+            + simpl. auto.
+            + eauto.
+            + auto.
+            + eauto.
+            + eapply SortedreducedB. simpl. exact. simpl. auto. auto.
+            + eauto.
+            + apply Sorted_inv in SortA. apply SortA.
+            + simpl. auto.
+      }
+      { apply H in H3 as Ht. 
+        assert(Hlast:=last_head (Match ({|id := id b; otime := otime b;oquantity := oquantity b - oquantity a;
+        oprice := oprice b; oquantity_cond := Match_obligations_obligation_1 b a l|} :: B0) A0) ({|idb := id b;
+        ida := id a; tprice := oprice a; tquantity := oquantity a; tquantity_cond := oquantity_cond a |})). 
+        destruct Hlast. 
+          - rewrite H4. simpl. apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+            destruct H3 as [a0 H3]. destruct H3. destruct H5. destruct H6. destruct H7. destruct H8. 
+            rewrite H6. simpl in H5. destruct H5. 
+            + subst b0. simpl. replace (id b =? id b) with true. move /eqP in price. lia. auto.
+            + move /eqP in price. auto. apply HbS in H5 as H5b. move /leP in H5b. 
+              destruct H9. destruct H10. destruct H11. destruct H12.
+              apply HaS in H3 as H3a. move /leP in H3a. destruct (id b =? id b0) eqn:Hb. lia. 
+              rewrite price_elim1. split. auto. eauto. lia. destruct (id b =? id b0). lia. 
+              rewrite price_elim1. split. auto. eauto. apply HaS in H3 as H3a. move /leP in H3a. lia.
+            + simpl. eauto.
+            + eauto.
+          - rewrite H4. auto. 
+          - auto.
+          - eapply SortedreducedB. simpl. exact. simpl. auto. auto.
+          - eauto.
+          - apply Sorted_inv in SortA. apply SortA.
+       } } 
+
+    { simpl in H3. destruct H3.
+      { subst.
+        match goal with |[ |- context[(tprice (last (?x::?y) t0) <= _ )] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id b =? id b) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l) t0)) with (tprice (last (t :: l) t0)). assert(In t (t::l)). auto.
+        rewrite <- HM in H3. subst M0. apply H0 in H3 as H3a. 
+        cut((Definitions.price B0 (idb t)) <= (if id b =? idb m0 then oprice b 
+        else
+        Definitions.price B0 (idb m0))). rewrite <- HM. lia. simpl. replace (id b =? id b) with true. 
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+        rewrite H5. rewrite H5 in H3a. simpl in H4. rewrite price_elim1. split. auto. eauto. move /eqP in price. 
+        apply HbS in H4 as H5b. move /leP in H5b. all:auto. eauto. eauto. eauto. apply Sorted_inv in SortB.
+        apply SortB. eauto. apply Sorted_inv in SortA. apply SortA.
+      }
+      { apply H0 in H3 as Ht. apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+        destruct H9. destruct H10. assert(Hlast:=last_head (Match B0 A0) ({|idb := id b;
+        ida := id a; tprice := oprice a; tquantity := oquantity a; tquantity_cond := oquantity_cond a |})). 
+        destruct Hlast. 
+          - rewrite H12. simpl. rewrite H5. move /eqP in price. auto. apply HbS in H4 as H5b. 
+            move /leP in H5b. apply HaS in H3 as H3a. move /leP in H3a. destruct (id b =? id b0) eqn:Hb. lia. 
+            rewrite price_elim1. split. auto. eauto. lia.
+          - rewrite H12. rewrite H5 in Ht. replace (Definitions.price B0 (id b0)) with (oprice b0) in Ht. 
+            apply HbS in H4 as H5b. move /leP in H5b. apply HaS in H3 as H3a. move /leP in H3a. 
+            destruct (id b =? idb t). lia. rewrite H5. rewrite price_elim1. split. auto. eauto. lia.
+            rewrite price_elim1. split. auto. eauto. lia.
+          - eauto.
+          - eauto. 
+          - auto.
+          - auto. 
+          - eauto. 
+          - apply Sorted_inv in SortB. apply SortB.
+          - eauto.
+          - apply Sorted_inv in SortA. apply SortA.
+       } } } 
+     { simpl in H3. destruct H3.
+      { subst. 
+        match goal with |[ |- context[(tprice (last (?x::?y) t0) <= _ )] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id b =? id b) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l0) t0)) with (tprice (last (t :: l0) t0)). assert(In t (t::l0)). auto.
+        rewrite <- HM in H3. subst M0. apply H1 in H3 as H3a. subst m0. rewrite <- HM. simpl. 
+        replace (id b =? id b) with true.
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8.
+        cut((Definitions.price B0 (idb t)) <= oprice b).  lia. rewrite H5. rewrite price_elim1. split. auto.
+        eauto. apply HbS in H4. move /leP in H4. lia. eauto. simpl. auto. eauto. eauto. apply Sorted_inv in SortB. 
+        apply SortB. eauto. eapply SortedreducedA. simpl. exact. simpl. auto. auto. simpl. auto.
+      }
+      { apply H1 in H3 as Ht. 
+        assert(Hlast:=last_head (Match B0 ({|id := id a;otime := otime a;
+        oquantity := oquantity a - oquantity b; oprice := oprice a;oquantity_cond := 
+        Match_obligations_obligation_4 b a l|} :: A0)) ({|idb := id b; ida := id a; tprice := oprice a; 
+        tquantity := oquantity b; tquantity_cond := oquantity_cond b |})). 
+        destruct Hlast. 
+          - rewrite H4. simpl. apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+            destruct H3 as [a0 H3]. destruct H3. destruct H5. destruct H6. destruct H7. destruct H8. 
+            rewrite H6. 
+            + move /eqP in price. auto. apply HbS in H5 as H5b. move /leP in H5b. 
+              destruct H9. destruct H10. destruct H11.  destruct (id b =? id b0) eqn:Hb. lia. 
+              rewrite price_elim1. split. auto. eauto. simpl in H3. destruct H3. subst a0. simpl in H12. lia.
+              apply HaS in H3 as H3a. move /leP in H3a. lia.
+            + simpl. eauto.
+            + eauto.
+          - rewrite H4. destruct (id b =? idb t). cut(Definitions.price B0 (idb t) <= oprice b). lia. 
+            apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+            destruct H3 as [a0 H3]. destruct H3. destruct H5. destruct H6. destruct H7. destruct H8. 
+            rewrite H6.  rewrite price_elim1. split. auto. eauto. apply HbS in H5. move /leP in H5. lia.
+            eauto. simpl. auto. auto.
+          - eauto.
+          - apply Sorted_inv in SortB. apply SortB.
+          - eauto.
+          - eapply SortedreducedA. simpl. exact. simpl. auto. auto.
+          } } } apply H2. all:auto. eauto.  apply Sorted_inv in SortA. apply SortA. Qed.
+
+Lemma Match_priceA B A t:
+NoDup (ids (B)) -> Sorted bcompetitive B -> NoDup (ids A) -> Sorted acompetitive A -> 
+In t (Match B A) -> price A (ida t) <= tprice (last (Match B A) t0).
+Proof. Admitted.
 
 End Match.

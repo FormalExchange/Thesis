@@ -99,14 +99,14 @@ Lemma bool_fun_equal (B1 B2: bool): (B1-> B2)-> (B2-> B1)-> B1=B2.
     Proof. intros H1 H2. destruct B1; destruct B2; auto.
            replace false with true. auto. symmetry; auto. Qed.
 
-    Hint Resolve bool_fun_equal: core.
+Hint Resolve bool_fun_equal: core.
 
 End GeneralReflections.
 
 
-Hint Immediate reflect_intro reflect_elim  reflect_EM reflect_dec dec_EM: core.
-Hint Resolve idP impP impP1: core.
-Hint Resolve bool_fun_equal: core.
+#[export] Hint Immediate reflect_intro reflect_elim  reflect_EM reflect_dec dec_EM: core.
+#[export] Hint Resolve idP impP impP1: core.
+#[export] Hint Resolve bool_fun_equal: core.
 
 Ltac solve_dec := eapply reflect_dec; eauto.
 Ltac solve_EM  := eapply reflect_EM; eauto.
@@ -159,7 +159,7 @@ Hint Resolve leP ltP nat_reflexive nat_transitive: core.
 
 End NaturalNumbers.
 
-Hint Resolve leP ltP nat_reflexive nat_transitive: core.
+#[export] Hint Resolve leP ltP nat_reflexive nat_transitive: core.
 
 
 (*########################## Next Part of the library ###############################*)
@@ -193,7 +193,7 @@ Require Export Lists.List Lia.
 
 Set Implicit Arguments.
 
-Hint Resolve in_eq in_cons in_inv in_nil in_dec: core.
+#[export] Hint Resolve in_eq in_cons in_inv in_nil in_dec: core.
 
 Section BasicListFacts.
   Variable A:Type.
@@ -211,7 +211,7 @@ Section BasicListFacts.
     Proof.  { intros x a l H. unfold not in H. split. intro. simpl in H.
               destruct H. right.  auto. simpl in H.  assert (a =x \/a<>x ). eauto.
               destruct H0. destruct H. left;auto. auto. } Qed.
-  Hint Resolve in_inv1 in_inv2 in_inv3 in_inv4: core.
+Hint Resolve in_inv1 in_inv2 in_inv3 in_inv4: core.
   (*---------Some facts about NoDup on a list --------------------------------*)
   Lemma nodup_intro (a:A)(l: list A): ~ In a l -> NoDup l -> NoDup (a::l).
     Proof.  intros H1 H2; eapply NoDup_cons_iff;tauto.  Qed. 
@@ -220,10 +220,10 @@ Section BasicListFacts.
   Lemma nodup_elim2 (a:A)(l: list A): NoDup (a::l) -> ~ In a l.
     Proof. intro H. eapply NoDup_cons_iff; eauto. Qed. 
   
-  Hint Immediate nodup_elim1  nodup_elim2  nodup_intro : core.
-  End BasicListFacts.
-Hint Resolve in_inv1 in_inv2 in_inv3 in_inv4: core.
 Hint Immediate nodup_elim1  nodup_elim2  nodup_intro : core.
+  End BasicListFacts.
+#[export] Hint Resolve in_inv1 in_inv2 in_inv3 in_inv4: core.
+#[export] Hint Immediate nodup_elim1  nodup_elim2  nodup_intro : core.
 
 
 
@@ -271,7 +271,7 @@ Section BasicSetFacts.
            apply H. auto. } Qed.
   Lemma self_incl (l:list A): l [<=] l.
   Proof. unfold Subset; tauto.  Qed. 
-  Hint Resolve self_incl: core.
+Hint Resolve self_incl: core.
 
   Lemma Subset_nil (l: list A): nil [<=] l.
   Proof. unfold "[<=]"; simpl; intros; contradiction. Qed.
@@ -312,7 +312,7 @@ end : core.
   Proof. { unfold Equal.  intros H H1. destruct H as [H0 H]; destruct H1 as [H1a H1].
            split; auto.  } Qed.
 
- Hint Extern 0 (?x [=] ?z)  =>
+Hint Extern 0 (?x [=] ?z)  =>
 match goal with
 | H: (x [=] ?y) |- _ => apply (@Eq_trans1  x y z)
 | H: (?y [=] z) |- _ => apply (@Eq_trans1  x y z)                                   
@@ -337,7 +337,7 @@ end : core.
   Lemma filter_intro (f: A->bool)(l: list A)(x: A): In x l -> (f x)-> In x (filter f l).
   Proof. intros; apply filter_In; split;auto. Qed.
 
-  Hint Immediate filter_elim1 filter_elim2 filter_intro: core.
+Hint Immediate filter_elim1 filter_elim2 filter_intro: core.
 
 
  (*--------Strong Induction, Well founded induction and set cardinality ----------*)
@@ -390,29 +390,29 @@ End BasicSetFacts.
 
 
    
-Hint Extern 0 (?x [<=] ?z)  =>
+#[export] Hint Extern 0 (?x [<=] ?z)  =>
 match goal with
 | H: (x [<=] ?y) |- _ => apply (@Subset_trans _ x y z)
 | H: (?y [<=] z) |- _ => apply (@Subset_trans _ x y z)                                   
 end : core.
 
-Hint Extern 0 (?x [=] ?z)  =>
+#[export] Hint Extern 0 (?x [=] ?z)  =>
 match goal with
 | H: (x [=] ?y) |- _ => apply (@Eq_trans1 _ x y z)
 | H: (?y [=] z) |- _ => apply (@Eq_trans1 _ x y z)                                   
 end : core.
 
 
-Hint Immediate Eq_refl Eq_sym Equal_elim Equal_intro Equal_intro1: core.
-Hint Immediate  Subset_elim1 Subset_elim2 Subset_nil Subset_of_nil Subset_elim3: core.
-Hint Resolve  self_incl: core.
-Hint Resolve Subset_intro Subset_intro1: core.
+#[export] Hint Immediate Eq_refl Eq_sym Equal_elim Equal_intro Equal_intro1: core.
+#[export] Hint Immediate  Subset_elim1 Subset_elim2 Subset_nil Subset_of_nil Subset_elim3: core.
+#[export] Hint Resolve  self_incl: core.
+#[export] Hint Resolve Subset_intro Subset_intro1: core.
 
-Hint Immediate filter_elim1 filter_elim2 filter_intro: core.
+#[export] Hint Immediate filter_elim1 filter_elim2 filter_intro: core.
 
-Hint Resolve lt_set_is_well_founded: core.
+#[export] Hint Resolve lt_set_is_well_founded: core.
 
-Hint Resolve non_zero_size element_list: core. 
+#[export] Hint Resolve non_zero_size element_list: core. 
 
 
 (*########################## Next Part of the library ###############################*)
@@ -501,7 +501,7 @@ Section Min_Max.
   Proof. unfold maxof. destruct (a <=r b). right. auto. left. auto.
   Qed.
 
-  Hint Resolve maxof_spec1 maxof_spec2 maxof_spec3 maxof_spec4 maxof_spec5: core.
+Hint Resolve maxof_spec1 maxof_spec2 maxof_spec3 maxof_spec4 maxof_spec5: core.
   
    Fixpoint maxin (l: list A)(d: A): A:=
     match l with
@@ -539,7 +539,7 @@ Lemma maxin_elim2 (l:list A) (d:A) :l<>nil -> In (maxin l d) l.
             apply maxin_spec with (a:=maxof a0 (maxin l a0))(l:=(a::a0::l))(d:=d0).
              simpl in H. auto. } } Qed.     
  
-   Hint Resolve maxin_spec maxin_spec0 maxin_elim maxin_elim1: core.
+Hint Resolve maxin_spec maxin_spec0 maxin_elim maxin_elim1: core.
 
     Definition minof (a b :A): A:= match a <=r b with
                                   |true => a
@@ -560,7 +560,7 @@ Lemma maxin_elim2 (l:list A) (d:A) :l<>nil -> In (maxin l d) l.
   Proof. unfold minof. destruct (a <=r b). left. auto. right. auto.
   Qed.
 
-   Hint Resolve minof_spec1 minof_spec2 minof_spec3 minof_spec4 minof_spec5: core.
+Hint Resolve minof_spec1 minof_spec2 minof_spec3 minof_spec4 minof_spec5: core.
 
    Fixpoint minin (l: list A)(d: A): A:=
     match l with
@@ -603,7 +603,7 @@ Lemma minin_elim2 (l:list A) (d:A) :l<>nil -> In (minin l d) l.
             apply minin_spec with (a:=minof a0 (minin l a0))(l:=(a::a0::l))(d:=d0).
              simpl in H. auto. } } Qed.     
  
-   Hint Resolve minin_spec minin_spec0 minin_elim minin_elim1: core.
+Hint Resolve minin_spec minin_spec0 minin_elim minin_elim1: core.
 
    (*---------------- Existence of Minimum and Maximum in the non-empty list------------- *)
 
@@ -654,12 +654,12 @@ Lemma minin_elim2 (l:list A) (d:A) :l<>nil -> In (minin l d) l.
 End Min_Max.
 
 
-Hint Resolve maxof_spec1 maxof_spec2 maxof_spec3 maxof_spec4: core.
-Hint Resolve maxin_spec maxin_elim maxin_elim1: core.
-Hint Resolve minof_spec1 minof_spec2 minof_spec3 minof_spec4: core.
-Hint Resolve minin_spec minin_elim minin_elim1: core.
+#[export] Hint Resolve maxof_spec1 maxof_spec2 maxof_spec3 maxof_spec4: core.
+#[export] Hint Resolve maxin_spec maxin_elim maxin_elim1: core.
+#[export] Hint Resolve minof_spec1 minof_spec2 minof_spec3 minof_spec4: core.
+#[export] Hint Resolve minin_spec minin_elim minin_elim1: core.
 
-Hint Immediate min_exists max_exists min_withP_exists max_withP_exists: core.
+#[export] Hint Immediate min_exists max_exists min_withP_exists max_withP_exists: core.
 
 
 
@@ -670,7 +670,7 @@ Section Nat_numbers.
   
 End Nat_numbers.
 
-Hint Resolve nat_comparable: core.
+#[export] Hint Resolve nat_comparable: core.
 
 
 (*########################## Next Part of the library ###############################*)
@@ -780,7 +780,7 @@ Section Sorting.
              simpl. destruct l'';auto. } } } } Qed.
 
 
-  Hint Resolve Sorted_elim1 Sorted_elim2 Sorted_elim3 Sorted_elim4
+Hint Resolve Sorted_elim1 Sorted_elim2 Sorted_elim3 Sorted_elim4
        Sorted_single Sorted_intro last_in_Sorted : core.
 
      
@@ -837,7 +837,7 @@ Definition comparable2 (lr: A->A-> bool) := forall x y, lr x y =true \/ lr y x =
            simpl; auto. simpl; rewrite IHl; auto. } } Qed.
   
   
-  Hint Resolve putin_intro putin_intro1 putin_elim putin_correct nodup_putin: core.
+Hint Resolve putin_intro putin_intro1 putin_elim putin_correct nodup_putin: core.
 
 
    Fixpoint sort (l: list A): list A:=
@@ -859,7 +859,7 @@ Definition comparable2 (lr: A->A-> bool) := forall x y, lr x y =true \/ lr y x =
     forall(l: list A), Sorted (sort l).
   Proof. induction l. simpl. constructor. simpl. eauto using putin_correct. Qed.
 
-  Hint Resolve sort_elim sort_intro sort_correct: core.
+Hint Resolve sort_elim sort_intro sort_correct: core.
   
   Lemma sort_equal (l: list A): Equal l (sort l).
   Proof. split;intro; eauto. Qed.
@@ -926,13 +926,13 @@ Definition comparable2 (lr: A->A-> bool) := forall x y, lr x y =true \/ lr y x =
 End Sorting. 
 
 
-Hint Resolve Sorted_elim1 Sorted_elim2 Sorted_elim3 Sorted_elim4
+#[export] Hint Resolve Sorted_elim1 Sorted_elim2 Sorted_elim3 Sorted_elim4
      Sorted_single Sorted_intro last_in_Sorted : core.
-Hint Resolve putin_intro putin_intro1 putin_elim putin_correct nodup_putin : core.
-Hint Resolve sort_elim sort_intro sort_correct sort_same_size : core.
-Hint Resolve sort_equal sort_equal1 Sorted_equal Sorted_equal1 nodup_sort: core.
-Hint Resolve empty_equal_nil_l head_equal_l: core.
-Hint Immediate sort_equal_nodup: core.
+#[export] Hint Resolve putin_intro putin_intro1 putin_elim putin_correct nodup_putin : core.
+#[export] Hint Resolve sort_elim sort_intro sort_correct sort_same_size : core.
+#[export] Hint Resolve sort_equal sort_equal1 Sorted_equal Sorted_equal1 nodup_sort: core.
+#[export] Hint Resolve empty_equal_nil_l head_equal_l: core.
+#[export] Hint Immediate sort_equal_nodup: core.
 
 
 
@@ -1017,14 +1017,14 @@ Lemma eqP  (T:eqType)(x y:T): reflect (x=y)(x == y).
 Proof. apply Decidable.eqP. Qed.
 
 
-Hint Resolve eqP: core.
+#[export] Hint Resolve eqP: core.
 
 Lemma eq_to_eqb (T:eqType)(x y:T): (x=y)-> (x == y).
 Proof.  intro; apply /eqP; auto. Qed.
 Lemma eqb_to_eq (T:eqType) (x y:T): (x == y)-> (x=y).
 Proof. intro;apply /eqP; auto. Qed.
 
-Hint Immediate eq_to_eqb eqb_to_eq: core.
+#[export] Hint Immediate eq_to_eqb eqb_to_eq: core.
 
 Lemma eq_refl (T: eqType)(x:T): x == x.
 Proof. apply /eqP; auto. Qed.
@@ -1035,27 +1035,27 @@ Proof. { case (x== y) eqn:H1; case ( y== x) eqn:H2;  try(auto).
        { assert (H3: y= x). apply /eqP; auto.
          rewrite H3 in H1; rewrite eq_refl in H1; inversion H1.  } } Qed.
 
-Hint Resolve eq_refl eq_symm: core.
+#[export] Hint Resolve eq_refl eq_symm: core.
 
 (*--------- Natural numbers as an instance of eqType---------------------*)
 
 Lemma nat_eqb_ref (x:nat): Nat.eqb x x = true.
 Proof. induction x;simpl;auto. Qed.
-Hint Resolve nat_eqb_ref:core.
+#[export] Hint Resolve nat_eqb_ref:core.
 
 Lemma nat_eqb_elim (x y:nat):  Nat.eqb x y -> x = y.
 Proof. { revert y. induction x.
        { intro y. case y. tauto. simpl; intros n H; inversion H. }
        intro y. case y. simpl; intro H; inversion H. simpl. eauto. } Qed.
-Hint Resolve nat_eqb_elim: core.
+#[export] Hint Resolve nat_eqb_elim: core.
 
 Lemma nat_eqb_intro (x y:nat): x=y -> Nat.eqb x y.
 Proof. intro H. subst x. eauto. Qed.
-Hint Resolve nat_eqb_intro: core.
+#[export] Hint Resolve nat_eqb_intro: core.
 
 Lemma nat_eqP (x y:nat): reflect (x=y)(Nat.eqb x y).
 Proof. apply reflect_intro.  split; eauto. Defined. 
-Hint Resolve nat_eqP: core.
+#[export] Hint Resolve nat_eqP: core.
 
 
 Canonical nat_eqType: eqType:= {| Decidable.E:= nat; Decidable.eqb:= Nat.eqb;
@@ -1064,7 +1064,7 @@ Canonical nat_eqType: eqType:= {| Decidable.E:= nat; Decidable.eqb:= Nat.eqb;
 (*--------- Bool as an instance of eqType --------------------------------*)
 Lemma bool_eqb_ref (x:bool): Bool.eqb x x = true.
 Proof. destruct x; simpl; auto. Qed.
-Hint Resolve bool_eqb_ref: core.
+#[export] Hint Resolve bool_eqb_ref: core.
 
 Lemma bool_eqb_elim (x y:bool): (Bool.eqb x y) -> x = y.
 Proof. destruct x; destruct y; simpl; try (auto || tauto). Qed.
@@ -1072,12 +1072,12 @@ Proof. destruct x; destruct y; simpl; try (auto || tauto). Qed.
 Lemma bool_eqb_intro (x y:bool): x = y -> (Bool.eqb x y).
 Proof. intros; subst y; destruct x; simpl; auto. Qed.
 
-Hint Immediate bool_eqb_elim bool_eqb_intro: core.
+#[export] Hint Immediate bool_eqb_elim bool_eqb_intro: core.
 
 Lemma bool_eqP (x y:bool): reflect (x=y)(Bool.eqb x y).
 Proof. apply reflect_intro.
        split. apply bool_eqb_intro. apply bool_eqb_elim. Qed.
-Hint Resolve bool_eqP: core.
+#[export] Hint Resolve bool_eqP: core.
 
 Canonical bool_eqType: eqType:= {| Decidable.E:= bool; Decidable.eqb:= Bool.eqb;
                                   Decidable.eqP:= bool_eqP |}.
@@ -1195,8 +1195,8 @@ Proof. eauto. Qed.
   Proof. apply reflect_intro. split.
          apply set_memb_correct2. apply set_memb_correct1. Qed.
   
-  Hint Resolve membP : core.
-  Hint Immediate set_memb_correct1 set_memb_correct2: core.
+Hint Resolve membP : core.
+ Hint Immediate set_memb_correct1 set_memb_correct2: core.
 
   Lemma memb_prop1 (a:A)(l s: list A): l [<=] s -> In a l -> memb a l = memb a s.
   Proof. intros H H1. assert (H2: In a s); auto. Qed.
@@ -1208,7 +1208,7 @@ Proof. eauto. Qed.
          apply memb_prop1;auto. apply memb_prop2;auto.
          eapply reflect_EM;auto. } Qed.
 
-  Hint Resolve memb_prop1 memb_prop2 memb_prop3: core.
+Hint Resolve memb_prop1 memb_prop2 memb_prop3: core.
   
 
 Lemma In_EM: forall (a:A) (x: list A), In a x \/ ~ In a x.
@@ -1267,7 +1267,7 @@ Hint Immediate noDup_elim noDup_intro: core.
 Lemma nodupP l: reflect (NoDup l) (noDup l).
 Proof. {cut (NoDup l <-> noDup l). eauto. apply NoDup_iff_noDup. } Qed.
 
-Hint Resolve nodupP : core.
+ Hint Resolve nodupP : core.
 
 Lemma NoDup_EM: forall l:list A, NoDup l \/ ~ NoDup l.
 Proof. eauto. Qed.
@@ -1407,7 +1407,7 @@ Hint Immediate equal_elim equal_intro: core.
          { simpl. move /orP. intro H1; destruct H1 as [H1| H2]. constructor. apply /H; auto.
            eapply Exists_cons_tl. apply /IHl; auto.  } } Qed.
   
-  Hint Resolve ExistsP: core.      
+Hint Resolve ExistsP: core.      
   
   (* Exists_dec
      : forall (A : Type) (P : A -> Prop) (l : list A),
@@ -1430,7 +1430,7 @@ Hint Immediate equal_elim equal_intro: core.
   Lemma existsP P f l: (forall x:A, reflect (P x)(f x))-> reflect (exists x, In x l /\ P x)(existsb f l).
   Proof. { intro H. eapply iffP with (P:= Exists P l). eapply ExistsP. apply H.
            all: apply Exists_exists. } Qed.
-  Hint Resolve existsP: core.
+Hint Resolve existsP: core.
   Lemma existsbP (f:A->bool) l: reflect (exists x, In x l /\ f x)(existsb f l).
   Proof. apply existsP. intros. apply idP. Qed.
   
@@ -1469,7 +1469,7 @@ Hint Immediate equal_elim equal_intro: core.
          { simpl. move /andP. intro H1; destruct H1 as [H1 H2]. constructor. apply /H; auto.
            apply /IHl; auto. } } Qed.
  
- Hint Resolve ForallP: core.
+Hint Resolve ForallP: core.
  Lemma Forall_EM P l:(forall x:A, P x \/ ~ P x ) -> Forall P l \/ ~ Forall P l.
  Proof.  { intros H. induction l. left. constructor. 
          cut( P a \/ ~ P a).  intro Ha. cut (Forall P l \/ ~ Forall P l). intro Hl.
@@ -1524,19 +1524,19 @@ End SetReflections.
 
 
 
-Hint Resolve membP memb2P nodupP emptyP subsetP equalP
+#[export] Hint Resolve membP memb2P nodupP emptyP subsetP equalP
      existsP existsbP ExistsP ForallP forallP forallbP memb2_comute: core.
-Hint Resolve forall_exists_EM exists_forall_EM: core.
-Hint Resolve forall_em_exists exists_em_forall: core.
+#[export] Hint Resolve forall_exists_EM exists_forall_EM: core.
+#[export] Hint Resolve forall_em_exists exists_em_forall: core.
 
-Hint Immediate set_memb_correct1 set_memb_correct2  memb2_elim: core.
-Hint Resolve memb_prop1 memb_prop2 memb_prop3 memb_prop4: core.
-Hint Immediate noDup_elim noDup_intro: core.
-Hint Immediate uniq_intro_elim: core.
-Hint Resolve uniq_noDup uniq_NoDup : core.
-Hint Immediate empty_elim empty_intro: core.
-Hint Immediate subset_intro subset_elim: core.
-Hint Immediate equal_elim equal_intro: core.
+#[export] Hint Immediate set_memb_correct1 set_memb_correct2  memb2_elim: core.
+#[export] Hint Resolve memb_prop1 memb_prop2 memb_prop3 memb_prop4: core.
+#[export] Hint Immediate noDup_elim noDup_intro: core.
+#[export] Hint Immediate uniq_intro_elim: core.
+#[export] Hint Resolve uniq_noDup uniq_NoDup : core.
+#[export] Hint Immediate empty_elim empty_intro: core.
+#[export] Hint Immediate subset_intro subset_elim: core.
+#[export] Hint Immediate equal_elim equal_intro: core.
 
 
 
@@ -1558,7 +1558,7 @@ Section MoreReflection.
   
 End MoreReflection.
 
-Hint Resolve forall_xyP forall_yxP: core.
+#[export] Hint Resolve forall_xyP forall_yxP: core.
 
 
 
@@ -1627,7 +1627,7 @@ Section DecLists.
   Proof. intro H. destruct H.  eapply insert_intro2;auto.  eapply insert_intro1;auto. Qed.
   Lemma insert_intro3 (a:A)(l: list A): In a (insert a l).
   Proof. { eapply insert_intro2. auto.  } Qed.
-  Hint Resolve insert_intro insert_intro1 insert_intro2 insert_intro3: core.
+Hint Resolve insert_intro insert_intro1 insert_intro2 insert_intro3: core.
   
   Lemma insert_not_empty (a: A)(l:list A): insert a l <> (empty).
   Proof. intro H. absurd (In a empty). simpl; auto. rewrite <- H.
@@ -1650,7 +1650,7 @@ Section DecLists.
          assert (H1: a=b \/ In a l). eapply insert_elim;eauto.
          destruct H1. absurd (a=b); auto. auto. } Qed.
   
-  Hint Resolve insert_elim insert_elim1 insert_elim2: core.
+ Hint Resolve insert_elim insert_elim1 insert_elim2: core.
   Lemma insert_iff (a b:A)(l:list A): In a (insert b l) <-> (a=b \/ In a l).
   Proof. split; auto. Qed.
 
@@ -1664,7 +1664,7 @@ Section DecLists.
            destruct H2. subst a0. switch_in eqH. apply eqH. eauto. 
            absurd (In a0 l); auto. eauto. } } } Qed.
   
-  Hint Resolve insert_nodup : core.
+Hint Resolve insert_nodup : core.
 
     
   (*------------ list remove operation on ordered list ----------------------------------- *)
@@ -1720,7 +1720,7 @@ Section DecLists.
          destruct H0. move /eqP in Haa0. auto. apply IHl' in H0. exact.
           eauto. } Qed.
                     
-  Hint Resolve delete_elim0 delete_elim1 delete_elim2 delete_intro: core.
+Hint Resolve delete_elim0 delete_elim1 delete_elim2 delete_intro: core.
   Lemma delete_iff (a b:A)(l: list A): NoDup l -> (In a (delete b l) <-> (In a l /\ a<>b)).
   Proof. intro H. split. eauto.
          intro H0. destruct H0 as [H0 H1]. eauto.  Qed. 
@@ -1762,7 +1762,7 @@ Section DecLists.
            apply delete_elim2 in H1. destruct H1. auto. exact.
            assert (H3: In a0 l). eauto. eauto. } Qed.
                  
-  Hint Resolve delete_nodup: core.
+ Hint Resolve delete_nodup: core.
   
   
 
@@ -1901,7 +1901,7 @@ Hint Resolve idx_successor diff_index same_index: core.
          replace (|delete a l|) with (|l|). auto.
          symmetry; auto using delete_size2. } Qed.
 
-  Hint Immediate delete_size delete_size1 delete_size2: core.
+Hint Immediate delete_size delete_size1 delete_size2: core.
 
    
   Lemma subset_cardinal_le (l s: list A): NoDup l -> l [<=] s -> |l| <= |s|.
@@ -1977,25 +1977,25 @@ match (l,k) with
 |(hd::tail, S k) => (nth tail k d)
 end.
 *)
-  Hint Resolve subset_cardinal_le subset_cardinal_lt subset_elim1 subset_elim2: core.
+ Hint Resolve subset_cardinal_le subset_cardinal_lt subset_elim1 subset_elim2: core.
 
 End DecLists.
 
 
 
- Hint Resolve insert_intro insert_intro1 insert_intro2 insert_intro3: core.
- Hint Resolve insert_elim insert_elim1 insert_elim2: core.
- Hint Resolve insert_nodup :core.
+ #[export] Hint Resolve insert_intro insert_intro1 insert_intro2 insert_intro3: core.
+ #[export] Hint Resolve insert_elim insert_elim1 insert_elim2: core.
+ #[export] Hint Resolve insert_nodup :core.
 
- Hint Resolve delete_elim0 delete_elim1 delete_elim2 delete_intro delete_intro1 delete_intro2 delete_size: core.
- Hint Resolve delete_size1a delete_size1 delete_size1b delete_size2: core.
- Hint Resolve delete_nodup list_head: core.
+ #[export] Hint Resolve delete_elim0 delete_elim1 delete_elim2 delete_intro delete_intro1 delete_intro2 delete_size: core.
+ #[export] Hint Resolve delete_size1a delete_size1 delete_size1b delete_size2: core.
+ #[export] Hint Resolve delete_nodup list_head: core.
  
-Hint Immediate absnt_idx_zero idx_zero_absnt idx_gt_zero idx_is_one: core.
-Hint Resolve idx_successor diff_index same_index: core.
+#[export] Hint Immediate absnt_idx_zero idx_zero_absnt idx_gt_zero idx_is_one: core.
+#[export] Hint Resolve idx_successor diff_index same_index: core.
 
 
- Hint Resolve subset_cardinal_le subset_cardinal_lt subset_elim1 subset_elim2: core.
+ #[export] Hint Resolve subset_cardinal_le subset_cardinal_lt subset_elim1 subset_elim2: core.
   
 
 
@@ -2146,7 +2146,7 @@ Fixpoint del_all (a:A)(l: list A): list A:=
            exact. exact.  apply IHl in H2. right. exact. } } Qed. 
 
 
-  Hint Resolve del_all_elim1 del_all_elim2 del_all_intro: core.
+Hint Resolve del_all_elim1 del_all_elim2 del_all_intro: core.
   
   Lemma del_all_nodup (a:A)(l: list A): NoDup l -> NoDup (del_all a l).
   Proof. { induction l. 
@@ -2156,7 +2156,7 @@ Fixpoint del_all (a:A)(l: list A): list A:=
             assert (H2: ~(In a0 l)). eauto. 
             assert (H3: ~(In a0 (del_all a l))). eauto. eauto. } } Qed.
 
-  Hint Resolve del_all_nodup: core.
+Hint Resolve del_all_nodup: core.
 
  (* ------- count of an element a in the list l ----------------------------------------*)
 
@@ -2256,8 +2256,8 @@ Fixpoint del_all (a:A)(l: list A): list A:=
           { simpl. destruct (a==a0) eqn: H2. destruct (a==a) eqn: H1. intros.
             lia. intros. lia. destruct (a==a) eqn: H1. intros. lia.
             intros. lia. }} Qed.
-    Hint Immediate countP1 countP2 countP3: core.
-  Hint Resolve countP4 countP5 countP6 countP7 countP8 countP9: core.
+Hint Immediate countP1 countP2 countP3: core.
+Hint Resolve countP4 countP5 countP6 countP7 countP8 countP9: core.
 
   Lemma count_nodup (l:list A): (forall x, In x l -> count x l <=1)-> NoDup l.
   Proof. { intros H.
@@ -2289,17 +2289,17 @@ Fixpoint del_all (a:A)(l: list A): list A:=
          eauto. apply nodup_count with (x:=a) in H2. assert (count a (uniq l) >= 1). 
          eauto. lia.  Qed.
   
-  Hint Immediate count_nodup nodup_count: core.
+Hint Immediate count_nodup nodup_count: core.
  
 End MoreDecList.
 
- Hint Resolve del_all_elim1 del_all_elim2 del_all_intro: core.
- Hint Resolve del_all_nodup: core.
+ #[export] Hint Resolve del_all_elim1 del_all_elim2 del_all_intro: core.
+ #[export] Hint Resolve del_all_nodup: core.
 
- Hint Immediate countP1 countP1b countP2 countP3: core.
- Hint Resolve countP4 countP5 countP6 countP7 countP8 countP9:  core.
- Hint Resolve countP10 countP11 countP12 uniq_count: core.
- Hint Immediate count_nodup nodup_count: core.
+ #[export] Hint Immediate countP1 countP1b countP2 countP3: core.
+ #[export] Hint Resolve countP4 countP5 countP6 countP7 countP8 countP9:  core.
+ #[export] Hint Resolve countP10 countP11 countP12 uniq_count: core.
+ #[export] Hint Immediate count_nodup nodup_count: core.
 
 Section Permutation.
 
@@ -2347,7 +2347,7 @@ Section Permutation.
            move /eqP in H0. rewrite IHl.  apply count_in_putin2. auto. }  Qed.
 
 
-  Hint Resolve count_in_putin1 count_in_putin2 count_in_sorted: core.
+Hint Resolve count_in_putin1 count_in_putin2 count_in_sorted: core.
   
   (* ---------------  sublist of a list (subsequence)------------------------------------ *)
 
@@ -2433,7 +2433,7 @@ Section Permutation.
    
    (*
 
-  Hint Extern 0 (is_true ( sublist ?x ?z) ) =>
+Hint Extern 0 (is_true ( sublist ?x ?z) ) =>
   match goal with
   | H: is_true (sublist x  ?y) |- _ => apply (@sublist_trans  x y z)
   | H: is_true (sublist ?y  z) |- _ => apply (@sublist_trans  x y z) 
@@ -2441,8 +2441,8 @@ Section Permutation.
 *)
     
  
-  Hint Resolve sublist_intro sublist_intro1 sublist_reflex sublist_Subset sublist_elim1: core.
-  Hint Resolve sublist_elim2 sublist_elim3 sublist_elim4: core.
+Hint Resolve sublist_intro sublist_intro1 sublist_reflex sublist_Subset sublist_elim1: core.
+Hint Resolve sublist_elim2 sublist_elim3 sublist_elim4: core.
 
 
   (* -------------- list inclusion (subset in multiset) ----------------------------------*)
@@ -2467,7 +2467,6 @@ Section Permutation.
             move /eqP in H3. auto. destruct (a==a0) eqn: H3. simpl. exact.
             simpl.  assert (H4: memb a s). eauto. case (memb a s) eqn:H5.
             exact. auto. } } Qed.
-   
    
 
   Lemma included_intro (l s: list A): (forall a, count a l <= count a s)-> included l s.
@@ -2519,6 +2518,13 @@ Section Permutation.
            replace (count x s) with  (count x (delete a s)).
            eauto. all: symmetry;eauto. } Qed. 
 
+
+     Lemma included_intro2b (a:A)(l s: list A): In a l -> included (delete a l) s-> included l (a::s).
+  Proof. intros. apply included_intro. intros. apply included_elim with (a:=a0) in H0.
+simpl. destruct (a0 == a) eqn:Ha. move /eqP in Ha. subst a0. apply countP7 in H.
+lia. move /eqP in Ha. apply countP9 with (l:=l) in Ha. lia. Qed.
+
+
   Lemma included_elim4 (a:A)(l s: list A): included (a::l) s -> included l s.
   Proof. { intro H. assert (H1: (forall a0, count a0 (a::l) <= count a0 s)).
            eapply included_elim. exact. eapply included_intro. 
@@ -2552,8 +2558,8 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
          { assert(delete a l = l). symmetry;eauto. 
            assert(delete a s = s). symmetry;eauto.
            rewrite H2. rewrite H3. lia. } }
-       { apply countP9 with (l0:=l) in H0 as H1.
-         apply countP9 with (l0:=s) in H0 as H2.
+       { apply countP9 with (l:=l) in H0 as H2.
+         apply countP9 with (l:=s) in H0 as H3.
          lia. } Qed.   
 
   Lemma included_elim3b (a:A)(l s: list A): included l (a::s) -> 
@@ -2569,7 +2575,7 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
            assert(delete a l = l). symmetry;eauto.   apply countP2 in H0. lia.
            eauto. }
          { apply countP2 in H0. apply countP2 in H2. lia. } } 
-       { apply countP9 with (l0:=l) in H1 as H2.
+       { apply countP9 with (l:=l) in H1 as H2.
          destruct (a0 == a) eqn:Ha. move /eqP in Ha. subst a. elim H1.  auto.
          auto. } Qed.
          
@@ -2634,7 +2640,7 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
           eapply included_intro. intros a.
           specialize (H1a a). specialize (H2a a). lia. } Qed.
 
-   Hint Extern 0 (is_true ( included ?x ?z) ) =>
+ Hint Extern 0 (is_true ( included ?x ?z) ) =>
   match goal with
   | H: is_true (included x  ?y) |- _ => apply (@included_trans  x y z)
   | H: is_true (included ?y  z) |- _ => apply (@included_trans  x y z) 
@@ -2642,7 +2648,7 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
 
  
   Hint Resolve included_intro1 included_intro2 included_intro3: core.
-  Hint Resolve included_refl included_intro: core.
+ Hint Resolve included_refl included_intro: core.
   Hint Resolve included_elim1 included_elim2 included_elim3: core.
   Hint Resolve included_elim4 (* included_elim4a *) included_elim5 included_elim: core.
 
@@ -2746,8 +2752,8 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
            destruct H4. subst a0. eauto. eauto. Qed.
 
        
-  Hint Resolve nodup_subset_included: core.
-  Hint Immediate sorted_included_sublist first_in_ordered_sublists
+Hint Resolve nodup_subset_included: core.
+Hint Immediate sorted_included_sublist first_in_ordered_sublists
   nodup_included_nodup :core.
   
 
@@ -2789,14 +2795,14 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
   Proof. intros H H1; move /andP in H; move /andP in H1; apply /andP.
          split;destruct H; destruct H1. all: auto. Qed.
 
-  Hint Extern 0 (is_true ( perm ?x ?z) ) =>
+Hint Extern 0 (is_true ( perm ?x ?z) ) =>
   match goal with
   | H: is_true (perm x  ?y) |- _ => apply (@perm_trans x y z)
   | H: is_true (perm ?y  z) |- _ => apply (@perm_trans x y z) 
   end : core.
 
-  Hint Resolve  perm_intro0a  perm_intro0b perm_refl perm_nil perm_elim1 : core.
-  Hint Immediate perm_elim perm_intro perm_sym: core.
+Hint Resolve  perm_intro0a  perm_intro0b perm_refl perm_nil perm_elim1 : core.
+Hint Immediate perm_elim perm_intro perm_sym: core.
   
   Lemma perm_sort1 (l s: list A)(lr: A-> A-> bool): perm l s -> perm  l (sort lr s).
   Proof.  eauto. Qed.
@@ -2834,48 +2840,48 @@ assert (H1: (forall a1, count a1 l <= count a1 (a0::l))). intros.
    
    
 
-   Hint Resolve perm_sort1 perm_sort2 perm_sort3 perm_nodup perm_subset: core.
+Hint Resolve perm_sort1 perm_sort2 perm_sort3 perm_nodup perm_subset: core.
    
  End Permutation. 
 
 
-  Hint Resolve uniform_subset: core.
+  #[export] Hint Resolve uniform_subset: core.
 
-  Hint Resolve count_in_putin1 count_in_putin2 count_in_sorted: core.
+  #[export] Hint Resolve count_in_putin1 count_in_putin2 count_in_sorted: core.
 
 
-  Hint Resolve sublist_intro sublist_intro1 sublist_reflex sublist_Subset sublist_elim1 subset_nodup_delete_subset: core.
-  Hint Resolve sublist_elim2 sublist_elim3 sublist_elim3a sublist_elim4 uniq_sublist: core.
+  #[export] Hint Resolve sublist_intro sublist_intro1 sublist_reflex sublist_Subset sublist_elim1 subset_nodup_delete_subset: core.
+  #[export] Hint Resolve sublist_elim2 sublist_elim3 sublist_elim3a sublist_elim4 uniq_sublist: core.
 (*
-  Hint Extern 0 (is_true ( sublist ?x ?z) ) =>
+  #[export] Hint Extern 0 (is_true ( sublist ?x ?z) ) =>
   match goal with
   | H: is_true (sublist x  ?y) |- _ => apply (@sublist_trans _ x y z)
   | H: is_true (sublist ?y  z) |- _ => apply (@sublist_trans _ x y z) 
   end.
 
 *)
-  Hint Resolve included_intro1 included_intro2 included_intro3: core.
-  Hint Resolve included_refl included_intro: core.
-  Hint Resolve included_elim1 included_elim2  included_elim3: core.
-  Hint Resolve included_elim4 (*included_elim4a*) included_elim5 included_elim: core.
+  #[export] Hint Resolve included_intro1 included_intro2 included_intro3: core.
+  #[export] Hint Resolve included_refl included_intro: core.
+  #[export] Hint Resolve included_elim1 included_elim2  included_elim3: core.
+  #[export] Hint Resolve included_elim4 (*included_elim4a*) included_elim5 included_elim: core.
   
-  Hint Extern 0 (is_true ( included ?x ?z) ) =>
+  #[export] Hint Extern 0 (is_true ( included ?x ?z) ) =>
   match goal with
   | H: is_true (included x  ?y) |- _ => apply (@included_trans _ x y z)
   | H: is_true (included ?y  z) |- _ => apply (@included_trans _ x y z) 
   end : core.
 
-  Hint Resolve nodup_subset_included: core.
-  Hint Immediate sorted_included_sublist first_in_ordered_sublists
+  #[export] Hint Resolve nodup_subset_included: core.
+  #[export] Hint Immediate sorted_included_sublist first_in_ordered_sublists
   nodup_included_nodup count_delete_uniq:core.
-  Hint Resolve  perm_intro0a  perm_intro0b perm_refl perm_nil perm_elim1 : core.
-  Hint Immediate perm_elim perm_intro perm_sym: core.
-  Hint Resolve perm_elim1 perm_elim2 perm_elim3: core.
+  #[export] Hint Resolve  perm_intro0a  perm_intro0b perm_refl perm_nil perm_elim1 : core.
+  #[export] Hint Immediate perm_elim perm_intro perm_sym: core.
+  #[export] Hint Resolve perm_elim1 perm_elim2 perm_elim3: core.
 
-  Hint Extern 0 (is_true ( perm ?x ?z) ) =>
+  #[export] Hint Extern 0 (is_true ( perm ?x ?z) ) =>
   match goal with
   | H: is_true (perm x  ?y) |- _ => apply (@perm_trans _ x y z)
   | H: is_true (perm ?y  z) |- _ => apply (@perm_trans _ x y z) 
   end : core.
 
-  Hint Resolve perm_sort1 perm_sort2 perm_sort3 perm_nodup perm_subset: core.
+  #[export] Hint Resolve perm_sort1 perm_sort2 perm_sort3 perm_nodup perm_subset: core.

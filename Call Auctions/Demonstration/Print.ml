@@ -7,73 +7,48 @@ let lines_from_files filename =
     | Some s -> lines_from_files_aux ic (s :: acc) in 
   lines_from_files_aux (open_in filename) [] 
 
-(**Functions to read bids data from the file**)
-(*type bid = {idb:int;btime:int;bp:int;bq:int}*)
-let createbid l:Certified.bid=
+(**Functions to read bids and asks (order) data from the file**)
+
+(*type order = { id : int; otime : int; oquantity : int; oprice : int }*)
+let createorder l:Certified.order=
 	match l with 
-		|[i;t;p;q] -> {Certified.idb=i;Certified.btime=t;Certified.bp=p;Certified.bq=q}  
-		|_ ->raise (Invalid_argument "Bid information is incomplete");;
+		|[i;t;p;q] -> {Certified.id=i;Certified.otime=t;Certified.oquantity=q;Certified.oprice=p}  
+		|_ ->raise (Invalid_argument "Order information is incomplete");;
 
-let string_to_bid line=createbid (List.map int_of_string (String.split_on_char ',' line));;
+let string_to_order line=createorder (List.map int_of_string (String.split_on_char ',' line));;
 
-(*This function takes a list of strings and converts them into list of bid records*)
-let rec str_list_bid_list mylist = match mylist with
+(*This function takes a list of strings and converts them into list of order records*)
+let rec str_list_order_list mylist = match mylist with
 	| [] ->[]
-	| line::mylist' ->(string_to_bid line)::(str_list_bid_list mylist')
+	| line::mylist' ->(string_to_order line)::(str_list_order_list mylist')
 
-(*type ask = {ida:int;stime:int;sp:int;sq:int}*)
-(**Functions to read asks data from the file**)
-let createask l=
+
+(** These functions read data from files and convert them into list of transactions **)
+(* Convert list of four tuples into a transaction*)
+let createtransaction l =
 	match l with 
-		|[i;t;p;q] -> {Certified.ida=i;Certified.stime=t;Certified.sp=p;Certified.sq=q}  
-		|_ ->raise (Invalid_argument "Ask information is incomplete");;
-
-let string_to_ask line=createask (List.map int_of_string (String.split_on_char ',' line));;
-
-
-(*This function takes a list of strings and converts them into list of ask records*)
-let rec str_list_ask_list mylist = match mylist with
-	| [] ->[]
-	| line::mylist' ->(string_to_ask line)::(str_list_ask_list mylist')
-
-
-(**Functions to read trades data from the file**)
-
-let rec getbid (bds:Certified.bid list) i=
-	match bds with 
-		|[] -> Certified.b0
-		|b::bds' -> if (b.idb = i) then b else getbid bds' i
-
-let rec getask (aks:Certified.ask list) i=
-	match aks with 
-		|[] -> Certified.a0
-		|a::aks' -> if (a.ida = i) then a else getask aks' i
-
-let createfill l bds aks=
-	match l with 
-		|[i1;i2;p;q] -> {Certified.bid_of=(getbid bds i1);Certified.ask_of= (getask aks i2);Certified.tp=p;Certified.tq=q}  
+		|[i1;i2;p;q] -> {Certified.idb=i1;Certified.ida= i2;Certified.tprice=p;Certified.tquantity=q}  
 		|_ ->raise (Invalid_argument "Trade information is incomplete");;
 
-let string_to_fill line bds aks=createfill (List.map int_of_string (String.split_on_char ',' line)) bds aks;;
+(* Split a string by commas and then convert each value into a number and them output into transaction *)
+let string_to_transaction line = createtransaction (List.map int_of_string (String.split_on_char ',' line));;
 
-
-(*This function takes a list of strings and converts them into list of transactions*)
-let rec str_list_fill_list mylist bds aks= match mylist with
+(* Take a list of strings and convert them into list of transactions *)
+let rec str_list_transaction_list mylist= match mylist with
 	| [] ->[]
-	| line::mylist' ->(string_to_fill line bds aks)::(str_list_fill_list mylist' bds aks)
+	| line::mylist' ->(string_to_transaction line)::(str_list_transaction_list mylist')
 
 
 (**Functions write trades data in a file**)
-let rec printm (m:Certified.fill_type list) sid = match m with
+let rec printm (m:Certified.transaction list) sid = match m with
 	|[] -> (Printf.printf "#################### End of Trades for stock %s ####################\n\n" sid)
-	|f::m' -> (Printf.printf "Buy id: %i, Sell id: %i, Price: %i, Quantity: %i\n" f.Certified.bid_of.idb f.Certified.ask_of.ida f.Certified.tp f.Certified.tq);printm m' sid
-
+	|f::m' -> (Printf.printf "Buy id: %i, Sell id: %i, Price: %i, Quantity: %i\n" f.Certified.idb f.Certified.ida f.Certified.tprice f.Certified.tquantity);printm m' sid
 
 let rec printmfile oc = function 
   | [] -> ()
-  | f::m -> Printf.fprintf oc "%d,%d,%d,%d\n" f.Certified.bid_of.idb f.Certified.ask_of.ida f.Certified.tp f.Certified.tq; printmfile oc m
+  | f::m -> Printf.fprintf oc "%d,%d,%d,%d\n" f.Certified.idb f.Certified.ida f.Certified.tprice f.Certified.tquantity; printmfile oc m
 
-let writematching file (m:Certified.fill_type list) =
+let writematching file (m:Certified.transaction list) =
   let oc = open_out file in
   printmfile oc m;
   close_out oc;

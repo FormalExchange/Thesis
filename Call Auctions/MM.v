@@ -1,19 +1,35 @@
-Require Export mUM.
+Require Export UM.
 
 Section MM.
 
 
 Definition MM B A:=
-(Match (Decr_Bid.sort B) (Decr_Ask.sort A)).
-
+FOA (Match (Decr_Bid.sort B) (Decr_Ask.sort A)) A.
 
 (*Definition MM_matching (B:list order) (A:list order) : (list transaction) :=
   FOA (UM B A) A. *)
 
-Theorem MM_Is_Matching (B:list order)(A:list order)
-(NDB: NoDup (ids B))(NDA: NoDup (ids A)):
-Matching (MM B A) B A.
-Proof. unfold MM. Admitted.
+Theorem MM_Is_Matching (B:list order)(A:list order):
+admissible B A -> Matching (MM B A) B A.
+Proof. unfold MM. intros. apply FOA_correct. split. auto. eapply Maching_permutation_full with (A1:=(Decr_Ask.sort A))
+(B1:=(Decr_Bid.sort B)). admit. admit. exact. 
+ apply Match_Matching. admit. admit. 
+ Admitted.
+
+Theorem MM_Is_fair (B:list order)(A:list order):
+admissible B A -> Is_fair (MM B A) B A.
+Proof. unfold MM. unfold Is_fair.
+intros. split.
+{ eapply FOA_correct. split. exact H. eapply Maching_permutation_full with (A1:=(Decr_Ask.sort A))
+(B1:=(Decr_Bid.sort B)). admit. admit. exact. 
+ apply Match_Matching. admit. admit. } 
+
+{ eapply FOA_correct. split. exact H. eapply Maching_permutation_full with (A1:=(Decr_Ask.sort A))
+(B1:=(Decr_Bid.sort B)). admit. admit. exact. 
+ apply Match_Matching. admit. admit. eapply Is_fair_bids_perm with (B1:=(Decr_Bid.sort B)) .
+exact. admit.
+ apply Match_Fair_on_Bids. split. eapply admissible_perm. admit. admit. exact H. admit. } Admitted.
+
 
 (*Move this lemma into another file*)
 Lemma exists_ttq_top_bid 
@@ -25,7 +41,7 @@ Sorted bcompetitive (b::B) ->
 (Qty_bid M' (id b) >= min (oquantity b) (Vol(M)))/\
 Vol(M) = Vol(M')).
 Proof. Admitted.
-
+(*
 Lemma MM_exists_opt_k (B A:list order)(b a: order)
 (NDA:NoDup (ids (a::A)))(NDB:NoDup (ids (b::B))):
 Sorted bcompetitive (b::B) -> 
@@ -75,7 +91,7 @@ Proof. revert B A b a NDA NDB. induction k.
              } 
 
           }
-
+*)
 
 Lemma MM_exists_opt_k (B A:list order)(b a: order)
 (NDA:NoDup (ids (a::A)))(NDB:NoDup (ids (b::B))):
@@ -161,22 +177,28 @@ Proof. revert B A b a NDA NDB. induction k.
 
 
 Lemma MM_exists_opt (B:list order)(A:list order)(M:list transaction)(b:order)(a:order)
-(NDA:NoDup (ids (a::A)))(NDB:NoDup (ids (b::B))):
+:
+admissible (b::B)(a::A) ->
 Sorted bcompetitive (b::B) -> 
 Sorted rev_acompetitive (a::A) -> 
 (Matching M (b::B) (a::A)) -> 
 oprice b >= oprice a ->
 Vol(M) >= (min (oquantity b) (oquantity a)) ->
 (exists M', (Matching M' (b::B) (a::A))/\
-(min (oquantity b) (oquantity a)) = Qty M (id b) (id a)/\Vol(M)=Vol(M')).
-Proof. Proof. intros. destruct ((min (oquantity b) (oquantity a)) - Qty M (id b) (id a)) eqn:Hk.
-exists M. split. auto. split. admit. auto. 
-apply MM_exists_opt_k with (M:=M)(A:=A)(B:=B)(k:=S n)(b:=b)(a:=a) in H1.
-destruct H1 as [M0 H1]. destruct H1. destruct H4. exists M0. split. auto.
-split. admit. all:auto. admit. split. admit. auto. Admitted. (*Use Qty_le_Qty_bid to clear admits *)
+(min (oquantity b) (oquantity a)) = Qty M' (id b) (id a)/\Vol(M)=Vol(M')).
+Proof. intro Adm. intros. 
+set(M0:= FOB M (b::B)). assert(Hf:= (FOB_correct M (b::B) (a::A))). 
+assert(admissible (b :: B) (a :: A) /\ Matching M (b :: B) (a :: A)). auto. apply Hf in H4 as H4a. destruct H4a.
+destruct H6. destruct H7. destruct ((min (oquantity b) (oquantity a)) - Qty (FOB M (b :: B)) (id b) (id a)) eqn:Hk.
+exists (FOB M (b :: B)). split. auto. split. (*Qty is never more than min a b, hence equal from H10.*) admit. auto.
+apply MM_exists_opt_k with (M:=(FOB M (b::B)))(A:=A)(B:=B)(k:=S n)(b:=b)(a:=a) in H5.
+destruct H5 as [M1 H5]. destruct H5. destruct H9. exists M1. split. auto.
+split. (*Qty is never more than min a b, hence equal from H10.*)
+ admit. lia. 
+all:auto. apply Adm. apply Adm. lia. apply (Is_FOB_ab_full_bid M B A b a).
+split. auto. split. auto. split. auto.  lia. Admitted. (*Use Qty_le_Qty_bid to clear admits *)
 
 
-Admitted.
 (*
 Proof. intros. 
        assert(exists M', (matching_in (b::B) (a::A) M')/\
@@ -539,18 +561,18 @@ Qed. *)
 
 
 Theorem MM_aux_optimal (B:list order)(A:list order)(M:list transaction):
-(NoDup (ids A)) -> (NoDup (ids B)) ->
+admissible B A ->
 Sorted bcompetitive B -> 
 Sorted rev_acompetitive A -> 
 (Matching M B A) -> 
 Vol(M) <= Vol(Match B A).
 Proof. revert M. apply Match_elim. 
 - firstorder. unfold Tvalid in H3. unfold valid in H3. induction M as [|t M]. simpl.
-auto. assert(In t (t::M)). simpl;auto. apply H3 in H6. destruct H6. destruct H6.
+auto. assert(In t (t::M)). simpl;auto. apply H2 in H8. destruct H8. destruct H8.
 firstorder.
 - firstorder. unfold Tvalid in H3. unfold valid in H3. induction M as [|t M]. simpl.
-auto. assert(In t (t::M)). simpl;auto. apply H3 in H6. firstorder.
-- intros.
+auto. assert(In t (t::M)). simpl;auto. apply H2 in H8. firstorder.
+- intros b B0 a A0 H H0 H1 H2 M H3. assert(H4:=H3). intros. 
 assert(HaS: forall x, In x A0 -> (acompetitive x a)). apply Sorted_ointro_not_A_tight. auto.
 assert(HbS: forall x, In x B0 -> (bcompetitive b x)). apply Sorted_ointroB_tight. auto.
 destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
@@ -566,9 +588,10 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         destruct Hv as [Hvu HvQ]. destruct HvQ as [HvQ Hv]. rewrite Hv.
         match goal with |[ |- context[_ (Match (?x::B0) A0)]] => set(a1:=x) end.  
         assert(HM0:exists M0, (Matching M0 (a1::B0) A0)/\
-        (Vol(OPT) = Vol(M0) + oquantity a)). admit. destruct HM0 as [M0 HMv]. 
+        (Vol(OPT) = Vol(M0) + oquantity a)).  admit. destruct HM0 as [M0 HMv]. 
         destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match (a1 :: B0) A0)).
-        lia. subst a1. apply H. all:simpl;auto. eauto. apply SortedreducedB with (b:=b).
+        lia. subst a1. apply H. all:simpl;auto. destruct H3 as [H3 H3a]. destruct H3a as [H3a H3b]. destruct H3b as [H3b H3c].
+        split.  simpl.  auto. split. eauto. split. simpl. auto. eauto. apply SortedreducedB with (b:=b).
         all:simpl;auto. apply Sorted_inv in H6. apply H6. 
         move /eqP in price. lia.
       }
@@ -583,7 +606,8 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         assert(HM0:exists M0, (Matching M0 B0 A0)/\
         (Vol(OPT) = Vol(M0) + oquantity a)). admit. destruct HM0 as [M0 HMv]. 
         destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match B0 A0)).
-        lia. apply H0. all:simpl;auto. eauto. eauto. apply Sorted_inv in H5. apply H5.
+        lia. apply H0. all:simpl;auto. destruct H3 as [H3 H3a]. destruct H3a as [H3a H3b]. destruct H3b as [H3b H3c].
+        split.  eauto. split. eauto. split. eauto. eauto. apply Sorted_inv in H5. apply H5.
         apply Sorted_inv in H6. apply H6.  auto. auto. 
         move /eqP in price. lia.
       }
@@ -600,12 +624,25 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         assert(HM0:exists M0, (Matching M0 B0 (a1::A0))/\
         (Vol(OPT) = Vol(M0) + oquantity b)). admit. destruct HM0 as [M0 HMv]. 
         destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match B0 (a1 :: A0))).
-        lia. subst a1. apply H1. all:simpl;auto. eauto. apply Sorted_inv in H5. apply H5.
+        lia. subst a1. apply H1. all:simpl;auto. destruct H3 as [H3 H3a]. destruct H3a as [H3a H3b]. 
+        destruct H3b as [H3b H3c].  split. eauto. split. simpl. auto. split. eauto. simpl. auto.
+        apply Sorted_inv in H5. apply H5.
         (* apply SortedreducedA with (a:=a). all:simpl;auto. *) admit. 
         move /eqP in price. lia.
       }
     }
-  } apply H2. all:auto. eauto. apply Sorted_inv in H6. apply H6. admit.
+  } apply H2. all:auto. eauto. apply Sorted_inv in H6. destruct H3 as [H3 H3a]. destruct H3a as [H3a H3b]. 
+    destruct H3b as [H3b H3c]. split.  simpl.  auto. split. eauto. split. simpl. auto. eauto.  admit. admit. 
 Admitted.
+
+
+Lemma MM_optimal B A:
+admissible B A -> Is_max (MM B A) B A.
+Proof. unfold Is_max. intros. split. apply MM_Is_Matching. auto. unfold MM. 
+assert(Vol ((Match (Decr_Bid.sort B) (Decr_Ask.sort A))) = Vol (FOA (Match (Decr_Bid.sort B) (Decr_Ask.sort A)) A)).
+eapply FOA_correct. split. exact H. eapply Maching_permutation_full with (A1:=(Decr_Ask.sort A))(B1:=(Decr_Bid.sort B)).
+admit. admit. exact. apply Match_Matching. admit. admit. rewrite <- H1. apply MM_aux_optimal. 
+apply admissible_perm with (A1:=A)(B1:=B). admit. admit. auto. admit. admit. eapply Maching_permutation_full with (A1:=A)(B1:=B). admit. admit. exact. auto. Admitted.
+
 
 End MM.

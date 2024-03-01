@@ -195,6 +195,27 @@ destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1.
   destruct H. destruct H. auto. simpl in Volume0. lia. auto.
 }Qed. 
 
+
+Lemma Qty_ask_FOA_a_rev_less (M:list transaction) (A: list order) (a: order):
+Vol M < oquantity a -> NoDup (ids (a::A)) -> Qty_ask (FOA_aux M (a::A)) (id a) = Vol (M).
+Proof. revert A a. induction M as [| m M]. intros A a Volume0 H. rewrite FOA_aux_equation_1. simpl. 
+simpl in Volume0. lia. 
+intros A a Volume0 H. rewrite FOA_aux_equation_3. simpl.
+destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1. 
+{ destruct s eqn:f2.
+  { simpl. replace (id a =? id a) with true. 
+    set (a0:= {|id := id a;otime := otime a;oquantity := oquantity a - tquantity m;oprice := oprice a; oquantity_cond := FOA_aux_obligations_obligation_1 m a l|}). 
+    simpl. replace (id a) with (id a0). rewrite IHM. simpl in Volume0. subst a0. simpl. 
+    lia. all:simpl;auto.
+  }
+  { simpl. replace (id a =? id a) with true. simpl in Volume0. lia. auto. } 
+}
+{ simpl. replace (id a =? id a) with true. rewrite Qty_ask_t_zero.
+  intro Hin. apply Subset_asks_FOA in Hin. simpl in H. apply NoDup_cons_iff in H.
+  destruct H. destruct H. auto. simpl in Volume0. lia. auto.
+}Qed. 
+
+
 Lemma Qty_ask_FOA (M:list transaction) (A: list order):
 NoDup (ids A) -> (forall a : order, In a A -> Qty_ask (FOA_aux M A) (id a) <= oquantity a).
 Proof. 
@@ -279,7 +300,7 @@ unfold Is_fair_asks. apply FOA_aux_elim.
 firstorder. firstorder.
 simpl. intros m M0 a A0 H H0 H1 nda. intros. 
 assert(HbS: forall x, In x A0 -> (Nat.leb (oprice a) (oprice x))). apply Sorted_ointroA. auto.
-assert(HmS: forall t, In t M0 -> (Nat.leb (tprice m) (tprice t))). apply Sorted_tintro. auto.
+assert(HmS: forall t, In t M0 -> (Nat.leb (tprice m) (tprice t))). apply Sorted_tintroD. auto.
 destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1. 
 { destruct s eqn:f2.
   { specialize (H s). specialize (H l). destruct H4. destruct H5. destruct H6.
@@ -326,7 +347,7 @@ destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1.
       destruct H8. rewrite H7. auto. simpl. destruct (id a =? id a0) eqn: Ha. apply ids_intro in H4. 
       apply NoDup_cons_iff in nda. destruct nda. destruct H8. move /eqP in Ha. rewrite Ha. auto.
       apply H1 with (a':=a'). all:auto. eauto. apply Sorted_inv in H2. apply H2.
-      apply SortedreducedM with (m:=m). simpl. all:auto. }
+      apply SortedreducedMD with (m:=m). simpl. all:auto. }
   }
  Qed.
 
@@ -479,7 +500,7 @@ Supply_property M A ->
 exists a, In a A /\ ida m = id a /\ tprice m >= oprice a).
 Proof. apply FOA_aux_elim. firstorder. firstorder. intros. 
 assert(HbS: forall x, In x A0 -> (Nat.leb (oprice a) (oprice x))). apply Sorted_ointroA. auto.
-assert(HmS: forall t, In t M0 -> (Nat.leb (tprice m) (tprice t))). apply Sorted_tintro. auto.
+assert(HmS: forall t, In t M0 -> (Nat.leb (tprice m) (tprice t))). apply Sorted_tintroD. auto.
 destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1. 
 { destruct s eqn:f2.
   { specialize (H s). specialize (H l). simpl in H6. destruct H6. 
@@ -533,7 +554,7 @@ destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1.
     }
     { apply H1 in H6. destruct H6. exists x. split. simpl. right. apply H6. apply H6. eauto. all:auto. 
       apply Sorted_inv in H3. apply H3. 
-      eapply SortedreducedM. simpl. auto. all:auto.
+      eapply SortedreducedMD. simpl. auto. all:auto.
 
 
       unfold Supply_property. intros. unfold supply_vol. unfold Supply_property in H5. 
@@ -586,6 +607,23 @@ rewrite Ha2. lia. apply Qty_ask1. auto.
  split. auto. auto. intros. apply H3 in H5.
 destruct H5 as [b H5]. destruct H5 as [a H5]. exists b. split. apply H5. split. apply H5.
 cut(oprice b >= tprice t1). lia. apply H5.  all:auto. Qed. 
+
+Lemma FOA_tprice_subset M A :
+tprices (FOA_aux M A) [<=] tprices M.
+Proof. apply FOA_aux_elim. firstorder. firstorder. simpl. intros.
+destruct (lt_eq_lt_dec (tquantity m) (oquantity a)) eqn:f1. 
+{ destruct s eqn:f2.
+  { simpl. apply Subset_intro. auto. } { simpl. apply Subset_intro. auto. } } { simpl. unfold "[<=]". unfold "[<=]" in H1. simpl.  intros. simpl in H1. destruct H2.  auto. apply H1 in H2. auto. } Qed.
+
+Lemma FOA_Uniform M A :
+Uniform M -> Uniform (FOA_aux M A).
+Proof. unfold Uniform. intros. apply uniform_subset with (l2:=(tprices M)). apply FOA_tprice_subset. auto. Qed.
+
+Lemma FOA_Is_uniform M B A :
+NoDup (ids A) -> NoDup (ids B) ->
+Sorted acompetitive A -> Sorted dec_price M -> 
+Is_uniform M B A -> Is_uniform (FOA_aux M A) B A.
+Proof. unfold Is_uniform. intros. split. apply FOA_Uniform. apply H3. apply FOA_Matching. all:auto. apply H3. Qed.
 
 
 Lemma fair_bids_FOA M B A:

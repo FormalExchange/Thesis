@@ -1,4 +1,7 @@
+Require Export Match.
 Require Export MatchingAlter.
+Require Export Fair.
+Require Export Coq.Sorting.Mergesort Sorted SortLists.
 
 Section UM.
 
@@ -20,14 +23,15 @@ Lemma Assign_Transaction_Price_is_uniform (l: list transaction)(n:nat):
 Proof. induction l. simpl.  constructor. simpl. 
          case l eqn: H. simpl.  constructor. simpl. simpl in IHl. constructor;auto. Qed.
 (*Move this lemma into other file *)
-Lemma last_column_is_trade_price (l:list transaction)(m:transaction)(n:nat): In m (Assign_Transaction_Price n l)->
-                                                                  (tprice m = n).
+Lemma Assign_Transaction_Price_is_p (l:list transaction)(m:transaction)(p:nat): 
+In m (Assign_Transaction_Price p l) ->  (tprice m = p).
 Proof. { intro H. induction l. auto. inversion H as [H0 |].  
          inversion H0 as [H1 ]. simpl. exact. apply IHl in H0. exact. } Qed.
 (*Move this lemma into other file *)
 
 Lemma Assign_Transaction_Price_elim (l: list transaction)(n:nat): 
-forall m', In m' (Assign_Transaction_Price n l)-> exists m, In m l /\ idb m = idb m' /\ ida m = ida m'. 
+forall m', In m' (Assign_Transaction_Price n l)-> 
+exists m, In m l /\ idb m = idb m' /\ ida m = ida m' /\tquantity m = tquantity m'. 
   Proof. intros. { induction l. 
            { simpl in H. inversion H. }
            { simpl in H. destruct H.
@@ -80,13 +84,41 @@ Vol(l) = Vol((Assign_Transaction_Price n l)).
 Proof. induction l. simpl. auto.
 simpl. lia. Qed.
 
+
+Lemma Assign_Transaction_Price_Matching (M: list transaction)(B A: list order)(p:nat):
+admissible B A -> 
+(forall t, In t M -> p <= price B (idb t) /\ price A (ida t) <= p) -> 
+Matching M B A -> Matching (Assign_Transaction_Price p M) B A.
+Proof. unfold Matching. unfold Tvalid. intros. destruct H1. destruct H2.
+split. intros. unfold valid. assert(Ht:=H4).
+ apply Assign_Transaction_Price_elim in H4. destruct H4.
+destruct H4. destruct H5. destruct H6 as [H6 H6b]. apply H0 in H4 as H4a. destruct H4a. apply H1 in H4. unfold valid in H4.
+destruct H4 as [b0 H4]. destruct H4 as [a0 H4]. destruct H4. destruct H9. destruct H10. destruct H11.
+destruct H12. destruct H13. destruct H14. destruct H15. exists b0. exists a0. split. auto.
+split. auto. split. lia. split. lia. split. auto. split. rewrite <- H6b. lia. split. rewrite <- H6b. lia.
+split. rewrite H10 in H7. rewrite price_elim1 in H7. split. auto. apply H. 
+rewrite (Assign_Transaction_Price_is_p M t p). auto. auto. 
+rewrite H11 in H8.  rewrite price_elim1 in H8. split. auto. apply H.
+rewrite (Assign_Transaction_Price_is_p M t p). auto. auto. split. 
+intros. rewrite <- (Assign_Transaction_Price_Qty_bid M b p). apply H2. auto.
+intros. rewrite <- (Assign_Transaction_Price_Qty_ask M a p). apply H3. auto. Qed.
+
+
 Lemma Assign_Transaction_Price_fairA (M: list transaction)(A: list order)(n:nat):
 Is_fair_asks M A -> Is_fair_asks ((Assign_Transaction_Price n M)) A.
-Proof. unfold Is_fair_asks. intros. rewrite <- Assign_Transaction_Price_Qty_ask. apply H with (a:=a)(a':=a'). split. apply H0. split. apply H0. split. apply H0. replace ((ids_ask_aux M)) with (map ida M). rewrite (Assign_Transaction_Price_asks _ n). replace ((map ida (Assign_Transaction_Price n M))) with (ids_ask_aux (Assign_Transaction_Price n M)). apply H0. eauto. eauto. Qed.
+Proof. unfold Is_fair_asks. intros. rewrite <- Assign_Transaction_Price_Qty_ask. 
+apply H with (a:=a)(a':=a'). split. apply H0. split. apply H0. split. apply H0. 
+replace ((ids_ask_aux M)) with (map ida M). rewrite (Assign_Transaction_Price_asks _ n).
+replace ((map ida (Assign_Transaction_Price n M))) with (ids_ask_aux (Assign_Transaction_Price n M)).
+apply H0. eauto. eauto. Qed.
 
 Lemma Assign_Transaction_Price_fairB (M: list transaction)(B: list order)(n:nat):
 Is_fair_bids M B -> Is_fair_bids ((Assign_Transaction_Price n M)) B.
-Proof. unfold Is_fair_bids. intros. rewrite <- Assign_Transaction_Price_Qty_bid. apply H with (b:=b)(b':=b'). split. apply H0. split. apply H0. split. apply H0. replace ((ids_bid_aux M)) with (map idb M). rewrite (Assign_Transaction_Price_bids _ n). replace ((map idb (Assign_Transaction_Price n M))) with (ids_bid_aux (Assign_Transaction_Price n M )). apply H0. eauto. eauto. Qed.
+Proof. unfold Is_fair_bids. intros. rewrite <- Assign_Transaction_Price_Qty_bid.
+apply H with (b:=b)(b':=b'). split. apply H0. split. apply H0. split. apply H0. 
+replace ((ids_bid_aux M)) with (map idb M). rewrite (Assign_Transaction_Price_bids _ n).
+replace ((map idb (Assign_Transaction_Price n M))) with (ids_bid_aux (Assign_Transaction_Price n M )). 
+apply H0. eauto. eauto. Qed.
 
 Definition UM_aux B A:=
 (Match (Decr_Bid.sort B) (Incr_Ask.sort A)).
@@ -101,30 +133,6 @@ exact H1. exact H2. apply Match_Matching. apply SortA_NoDup. auto. apply SortB_N
 Definition t0:= Mk_transaction 0 0 0 1 not1.
 
 Definition Last_Transaction_Price M:= tprice ((last M t0)).
-
-(*Definition Assign_Transaction_Price p M := replace_column M p.*)
-
-Definition UM B A:= 
-           let B:= (Decr_Bid.sort B) in
-           let A:= (Incr_Ask.sort A) in
-           let M:= (Match B A) in
-           let p:= Last_Transaction_Price M in
-           Assign_Transaction_Price p M.
-
-
-
-Theorem UM_Fair (B:list order)(A:list order)
-(NDB: NoDup (ids B))(NDA: NoDup (ids A))(NDBt: NoDup (timesof B))(NDAt: NoDup (timesof A)):
-Sorted bcompetitive B -> Sorted acompetitive (A) -> Is_fair (UM B A) B A.
-Proof. intros. unfold Is_fair.
-               split.
-                 { unfold UM. apply Assign_Transaction_Price_fairA. replace (Decr_Bid.sort B) with B. replace (Incr_Ask.sort A) with A. apply Match_Fair_ask. all:auto. rewrite <- Sorted_sortA.  all:auto. 
-rewrite <- Sorted_sortB.  all:auto.
-}
-                 { unfold UM. apply Assign_Transaction_Price_fairB. unfold UM. replace (Decr_Bid.sort B) with B. replace (Incr_Ask.sort A) with A. apply Match_Fair_bid. all:auto. rewrite <- Sorted_sortA.  all:auto.
-rewrite <- Sorted_sortB.  all:auto.  } Qed.
-
-
 
 Lemma exists_opt_k (B:list order)(A:list order)(b:order)(a:order):
 Sorted bcompetitive (b::B) -> 
@@ -155,7 +163,7 @@ Proof. revert B A b a. induction k.
             assert(Qty M (id b) (id a) < Qty_ask M (id a)). lia.
             apply Qty_lt_Qty_ask_m_exists in H4.
             destruct H3 as [m1 H3]. destruct H4 as [m2 H4]. destruct H3. destruct H5. destruct H4.
-            destruct H7.  apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2) in Uni_M.
+            destruct H7. apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2) in Uni_M.
             apply IHk in Uni_M. destruct Uni_M as [M0 Uni_M]. destruct Uni_M as [U1 U2].
             destruct U2 as [U2 U3]. exists M0. split. auto. split. rewrite <- H1. auto.
             auto. rewrite (increase_ab_quantity_Vol _ m1 m2 b a). all:auto.  intro.
@@ -185,116 +193,10 @@ Proof. revert B A b a. induction k.
             split. rewrite (increase_ab_quantity_Qty_bid _ m1 m2 b b a). all:auto. intro;subst m1;lia. lia.
             rewrite (increase_ab_quantity_extra _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. intro;subst m1;lia.
           } } Qed.
-(*
+
+(*Set M:=FAIR M in this Lemma. Also prove that FAIR does not change uniform property*)
 Lemma exists_opt (B:list order)(A:list order)(M:list transaction)(b:order)(a:order)
-(NZT: forall m : transaction, In m M -> tq m > 0)
-(NZA:(forall a0, In a0 (a::A) -> (sq a0) > 0))
-(NZB:(forall b0, In b0 (b :: B) -> bq b0 > 0))
-(NDA:NoDup (idas_of (a::A)))(NDB:NoDup (idbs_of (b::B))):
-Sorted by_dbp (b::B) -> 
-Sorted by_sp (a::A) -> 
-(Is_uniform M (b::B) (a::A)) -> 
-b>=a ->
-QM(M)>=(min (bq b) (sq a)) ->
-(exists OPT, (Is_uniform OPT (b::B) (a::A))/\
-(ttq_ab OPT b a = min (bq b) (sq a))/\QM(M)=QM(OPT)/\
-(forall m : transaction, In m OPT -> tq m > 0)).
-Proof. intros. 
-       assert((exists M', (Is_uniform M' (b::B) (a::A))/\
-       (ttqa M' a >= min (bq b) (sq a))/\
-       (ttqb M' b >= min (bq b) (sq a))/\QM(M)=QM(M')
-       /\forall m : transaction, In m M' -> tq m > 0)).
-       eapply exists_ttq_top. all:auto. destruct H4 as [M0 H5].
-       destruct H5. destruct H5. destruct H6. 
-       destruct (Nat.min (bq b) (sq a) - ttq_ab M0 b a) eqn:Hk.
-       {
-         eapply exists_opt_k with (k:=0)(A:=A)(a:=a)(B:=B)(b:=b) in H5.
-         destruct H5 as [OPT H5]. exists OPT. 
-         destruct H5. destruct H7.
-         split. apply H5. split. 
-         assert (Hmin:ttq_ab OPT b a <= Nat.min (bq b) (sq a)).
-         eapply matching_in_elim9 with (B:=(b::B))(A:=(a::A)).
-         apply H5.  all:auto.  lia. split. lia. apply H8. lia. apply H7.
-       }  
-       { assert(Haba:ttqa M0 a >=ttq_ab M0 b a).
-         eauto. 
-         eapply exists_opt_k with (k:= S n)(A:=A)(a:=a)(B:=B)(b:=b) in H5.
-         destruct H5 as [OPT H5]. exists OPT. 
-         destruct H5. destruct H7.
-         split. apply H5. split. 
-         assert (Hmin:ttq_ab OPT b a <= Nat.min (bq b) (sq a)).
-         eapply matching_in_elim9 with (B:=(b::B))(A:=(a::A)).
-         apply H5.  all:auto.  lia. split. lia. apply H8. lia. apply H7.       }
-Qed. 
-
-
-
-
-
-Lemma unmatchableAB_nil (B:list order) (A:list order) (b:order)(a:order)
-(M:list transaction): Sorted by_dbp (b::B) -> Sorted by_sp (a::A) ->
-matching_in (b::B) (a::A) M -> b<a-> M=nil.
-Proof. { intros H1 H2 H3 H4.
-         case M as [|f  M'] eqn:HM.
-         { auto. }
-         { set (b0:= bid_of f). set (a0:= ask_of f).
-           assert (Hfask: In (ask_of f) (a::A)). 
-           { eapply matching_in_elim5. exact H3. }
-           assert (Hfbid: In (bid_of f) (b::B)). 
-           { eapply matching_in_elim4.  exact H3. }
-           assert (Hmatch: bid_of f >= ask_of f). eauto.
-           assert (h1: by_dbp b b0). 
-           { unfold b0. unfold is_true. apply bool_fun_equal.
-             intro. exact is_true_true. intro.
-              eapply Sorted_elim2. exact by_dbp_refl.
-            exact H1. exact Hfbid. }
-           assert (h2: by_sp a a0).
-           { apply Sorted_elim2 with (x:=a0) in H2.
-             auto. apply by_sp_refl. eauto.
-           }
-           unfold by_dbp in h1. 
-           move /orP in h1.
-           unfold by_sp in h2. 
-           move /orP in h2.
-           destruct h1;destruct h2. 
-           {
-           move /leP in H.
-           move /leP in H0.
-           unfold b0 in H.
-           unfold a0 in H0.
-           lia.
-           }
-           {
-           move /leP in H.
-           move /andP in H0. destruct H0.
-           move /eqP in H0.
-           unfold b0 in H.
-           unfold a0 in H0.
-           lia.
-           }
-           {
-           move /leP in H0.
-           move /andP in H. destruct H.
-           move /eqP in H.
-           unfold b0 in H.
-           unfold a0 in H0.
-           lia.
-           }
-           {
-           move /andP in H. destruct H.
-           move /eqP in H.
-           move /andP in H0. destruct H0.
-           move /eqP in H0. 
-           unfold b0 in H.
-           unfold a0 in H0.
-           lia.
-           }            
- } } Qed.
-
-*)
-
-
-Lemma exists_opt (B:list order)(A:list order)(M:list transaction)(b:order)(a:order):
+(ndtb: NoDup (timesof (b::B)))(ndta:NoDup (timesof (a::A))):
 NoDup (ids (a::A)) -> NoDup (ids (b::B)) ->
 Sorted bcompetitive (b::B) -> 
 Sorted acompetitive (a::A) -> 
@@ -304,54 +206,82 @@ Vol(M)>=(min (oquantity b) (oquantity a)) ->
 (exists OPT, (Is_uniform OPT (b::B) (a::A))/\
 (Qty OPT (id b) (id a) = (min (oquantity b) (oquantity a)))/\
 Vol(M)=Vol(OPT)).
-Proof. intros. destruct ((min (oquantity b) (oquantity a)) - Qty M (id b) (id a)) eqn:Hk.
-exists M. split. auto. split. admit. auto. 
-apply exists_opt_k with (M:=M)(A:=A)(B:=B)(k:=S n)(b:=b)(a:=a) in H1.
-destruct H1 as [M0 H1]. destruct H1. destruct H6. exists M0. split. auto.
-split. admit. all:auto. split. admit. split. admit. auto. Admitted. (*Use Qty_le_Qty_bid to clear admits *)
+Proof. set(M':= Fair M (b::B) (a::A)).
+intros. destruct ((min (oquantity b) (oquantity a)) - Qty M' (id b) (id a)) eqn:Hk.
+{ assert(admissible (b::B) (a::A) /\ Matching M (b::B) (a::A)).
+  split. unfold admissible. all:auto. apply H3.
+  apply Fair_main in H6. exists M'. split. split. apply Fair_Uniform. apply H3. apply H6. split.
+  assert(HQb:= (Qty_le_Qty_bid M' (id b) (id a))).
+  assert(HQa:= (Qty_le_Qty_ask M' (id b) (id a))).
+  assert(Qty_bid M' (id b) <= (oquantity b)). apply H6. auto.
+  assert(Qty_ask M' (id a) <= (oquantity a)). apply H6. auto. lia.
+  apply H6. 
+} 
+{ assert(admissible (b::B) (a::A) /\ Matching M (b::B) (a::A)).
+  split. unfold admissible. all:auto. apply H3. apply Fair_main in H6. destruct H6. destruct H7.
+  apply exists_opt_k with (M:=M')(A:=A)(B:=B)(k:=S n)(b:=b)(a:=a) in H1.
+  destruct H1 as [M0 H1]. destruct H1. destruct H9. exists M0. split. auto.
+  split. assert(HQb:= (Qty_le_Qty_bid M0 (id b) (id a))).
+  assert(HQa:= (Qty_le_Qty_ask M0 (id b) (id a))). 
+  assert(Qty_bid M0 (id b) <= (oquantity b)). apply H1. auto.
+  assert(Qty_ask M0 (id a) <= (oquantity a)). apply H1. auto. lia. 
+  subst M'. lia. all:auto. split. 
+  apply Fair_Uniform. apply H3. subst M'.
+  apply H6. subst M'. lia. split. subst M'. apply Is_fair_ab_full. split. unfold admissible. auto.
+  split. apply H3. split. auto. split. auto. lia.
+  split. subst M'. apply Is_fair_ab_full. split. unfold admissible. auto.
+  split. apply H3. split. auto. split. auto. lia. auto. 
+} Qed.
+
 
 
 (*Main Lemma: first prove this.*)
-Lemma Match_OPT (B:list order)(A:list order)(M:list transaction):
+Lemma Match_OPT (B:list order)(A:list order)(M:list transaction)(ndtb : NoDup (timesof (B)))(ndta : NoDup (timesof (A))):
 (NoDup (ids A)) -> (NoDup (ids B)) ->
 Sorted bcompetitive B -> 
 Sorted acompetitive A -> 
 Is_uniform M B A -> Vol(M) <= Vol(Match B A).
-Proof. revert M. apply Match_elim. 
+Proof. revert M ndtb ndta. apply Match_elim. 
 - firstorder. unfold Tvalid in H4. unfold valid in H4. induction M as [|t M]. simpl.
-auto. assert(In t (t::M)). simpl;auto. apply H4 in H7. destruct H7. destruct H7.
-firstorder.
+  auto. assert(In t (t::M)). simpl;auto. apply H4 in H7. destruct H7. destruct H7.
+  firstorder.
 - firstorder. unfold Tvalid in H4. unfold valid in H4. induction M as [|t M]. simpl.
-auto. assert(In t (t::M)). simpl;auto. apply H4 in H7. firstorder.
+  auto. assert(In t (t::M)). simpl;auto. apply H4 in H7. firstorder.
 - intros.
-assert(HaS: forall x, In x A0 -> (acompetitive a x)). apply Sorted_ointroA_tight. auto.
-assert(HbS: forall x, In x B0 -> (bcompetitive b x)). apply Sorted_ointroB_tight. auto.
-destruct H7 as [Hu Hm]. unfold Uniform in Hu. 
-destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
-{ destruct (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:f1. 
-  { destruct s eqn:f2.
+  assert(HaS: forall x, In x A0 -> (acompetitive a x)). apply Sorted_ointroA_tight. auto.
+  assert(HbS: forall x, In x B0 -> (bcompetitive b x)). apply Sorted_ointroB_tight. auto.
+  destruct H7 as [Hu Hm]. unfold Uniform in Hu. 
+  destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
+  { destruct (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:f1. 
+   { destruct s eqn:f2.
     { specialize (H s). specialize (H l). simpl. 
       destruct (Nat.leb (Vol(M)) (min (oquantity b) (oquantity a))) eqn:Hqab.
       { move /leP in Hqab. 
         replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in Hqab. 
         lia. lia. }
       { move /leP in Hqab. assert(Hv:Vol M >= Nat.min (oquantity b) (oquantity a)). lia.
-        apply (exists_opt B0 A0 _ _ _) in Hv. all:auto. destruct Hv as [OPT Hv]. 
-        destruct Hv as [Hvu HvQ]. destruct HvQ as [HvQ Hv]. rewrite Hv.
-        match goal with |[ |- context[_ (Match (?x::B0) A0)]] => set(a1:=x) end.
-        assert(HM0:exists M0, (Is_uniform M0 (a1::B0) A0)/\
-        (Vol(OPT) = Vol(M0) + oquantity a)). destruct Hvu as [Hopt1 Hopt2].
-        apply remove_ab_transactions_main in Hopt2. destruct Hopt2 as [M0 Hopt2].
-        rewrite reduced_equation_1 in Hopt2. rewrite reduced_equation_1 in Hopt2. 
-        destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba;
-        destruct (Compare_dec.le_lt_dec (oquantity a) (oquantity b)) eqn:Hab.
-        { lia. } { lia. } { exists M0. split. subst a1. replace (MatchingAlter.reduced_obligations_obligation_1 a b l0) with (Match.Match_obligations_obligation_1 b a l) in Hopt2. apply Hopt2. admit.
- destruct Hopt2. rewrite H8. lia. } {lia. } apply Hopt1. auto. destruct HM0 as [M0 HMv]. 
-        destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match (a1 :: B0) A0)).
-        lia. subst a1. apply H. all:simpl;auto. eauto. apply SortedreducedB with (b:=b).
-        all:simpl;auto. apply Sorted_inv in H6. apply H6. split. auto. auto. 
-        move /eqP in price. lia.
-      }
+        apply (exists_opt B0 A0 _ _ _) in Hv. 
+        - destruct Hv as [OPT Hv]. destruct Hv as [Hvu HvQ]. destruct HvQ as [HvQ Hv]. rewrite Hv.
+          match goal with |[ |- context[_ (Match (?x::B0) A0)]] => set(a1:=x) end.
+          assert(HM0:exists M0, (Is_uniform M0 (a1::B0) A0)/\(Vol(OPT) = Vol(M0) + oquantity a)). 
+          destruct Hvu as [Hopt1 Hopt2].  apply remove_ab_transactions_main in Hopt2. destruct Hopt2 as [M0 Hopt2].
+          unfold reduced in Hopt2. rewrite f1 in Hopt2. simpl in Hopt2. 
+          + exists M0. split. subst a1.  apply Hopt2. 
+            replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in Hopt2. apply Hopt2. lia. 
+          + apply Hopt1. 
+          + auto. 
+          + auto. destruct HM0 as [M0 HMv].   destruct HMv as [HMu HMQ]. rewrite HMQ. 
+            cut(Vol M0 <= Vol (Match (a1 :: B0) A0)). lia. subst a1. apply H. all:simpl;auto. eauto. eauto. 
+            apply SortedreducedB with (b:=b). all:simpl;auto. apply Sorted_inv in H6. apply H6. 
+        - auto. 
+        - auto.
+        - auto.
+        - auto.
+        - auto.
+        - auto.
+        - split. auto. auto.
+        - move /eqP in price. lia.
+      } 
     }
     { simpl. destruct (Nat.leb (Vol(M)) (min (oquantity b) (oquantity a))) eqn:Hqab.
       { move /leP in Hqab. 
@@ -363,13 +293,11 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         assert(HM0:exists M0, (Is_uniform M0 B0 A0)/\
         (Vol(OPT) = Vol(M0) + oquantity a)). destruct Hvu as [Hopt1 Hopt2].
         apply remove_ab_transactions_main in Hopt2. destruct Hopt2 as [M0 Hopt2].
-        rewrite reduced_equation_1 in Hopt2. rewrite reduced_equation_1 in Hopt2. 
-        destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba;
-        destruct (Compare_dec.le_lt_dec (oquantity a) (oquantity b)) eqn:Hab.
-        { exists M0. split. apply Hopt2. destruct Hopt2. rewrite H8. lia. } {lia. } { lia. } { lia. } 
-        apply Hopt1. auto. destruct HM0 as [M0 HMv]. 
+        unfold reduced in Hopt2. rewrite f1 in Hopt2. simpl in Hopt2. 
+        replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in Hopt2.
+        exists M0. all:auto. lia.  destruct HM0 as [M0 HMv]. 
         destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match B0 A0)).
-        lia. apply H0. all:simpl;auto. eauto. eauto. apply Sorted_inv in H5. apply H5.
+        lia. apply H0. all:simpl;auto. eauto. eauto. eauto. eauto. apply Sorted_inv in H5. apply H5.
         apply Sorted_inv in H6. apply H6. split. auto. auto. 
         move /eqP in price. lia.
       }
@@ -385,14 +313,13 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         match goal with |[ |- context[_ (Match B0 (?x::A0))]] => set(a1:=x) end.  
         assert(HM0:exists M0, (Is_uniform M0 B0 (a1::A0))/\
         (Vol(OPT) = Vol(M0) + oquantity b)). destruct Hvu as [Hopt1 Hopt2].
-        apply remove_ab_transactions_main in Hopt2. destruct Hopt2 as [M0 Hopt2].
-        rewrite reduced_equation_1 in Hopt2. rewrite reduced_equation_1 in Hopt2. 
-        destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba;
-        destruct (Compare_dec.le_lt_dec (oquantity a) (oquantity b)) eqn:Hab.
-        { lia. } { exists M0. split. subst a1. replace (MatchingAlter.reduced_obligations_obligation_1 b a l1) with (Match.Match_obligations_obligation_4 b a l) in Hopt2. apply Hopt2. admit.
- destruct Hopt2. rewrite H8. lia. } {lia. } { lia. } apply Hopt1. auto. destruct HM0 as [M0 HMv]. 
+        apply remove_ab_transactions_main in Hopt2. destruct Hopt2 as [M0 Hopt2]. 
+        unfold reduced in Hopt2. rewrite f1 in Hopt2. simpl in Hopt2. 
+        replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in Hopt2.
+        exists M0. split. subst a1. apply Hopt2. destruct Hopt2. rewrite H8. lia. 
+        lia. auto. lia. destruct HM0 as [M0 HMv]. 
         destruct HMv as [HMu HMQ]. rewrite HMQ. cut(Vol M0 <= Vol (Match B0 (a1 :: A0))).
-        lia. subst a1. apply H1. all:simpl;auto. eauto. apply Sorted_inv in H5. apply H5.
+        lia. subst a1. apply H1. all:simpl;auto. eauto. eauto. apply Sorted_inv in H5. apply H5.
         apply SortedreducedA with (a:=a). all:simpl;auto. split. auto. auto. 
         move /eqP in price. lia.
       }
@@ -413,7 +340,95 @@ destruct (PeanoNat.Nat.eqb (oprice a - oprice b) 0) eqn:price.
         -- apply HaS2 in H7. apply HbS2 in H8. unfold tradable in H9. 
            move /eqP in price. move /leP in H7. move /leP in H8. lia.
     + apply not_matchable_matching_nil with (M:=M) in H7. rewrite H7. simpl. lia. auto.
-Admitted.
+Qed.
 
+Definition UM B A:= 
+           let B:= (Decr_Bid.sort B) in
+           let A:= (Incr_Ask.sort A) in
+           let M:= (Match B A) in
+           let p:= Last_Transaction_Price M in
+           Assign_Transaction_Price p M.
+
+
+Theorem UM_Fair (B:list order)(A:list order):
+admissible B A -> Is_fair (UM B A) B A.
+Proof. unfold admissible. intros. unfold Is_fair.
+               split.
+                 { unfold UM. apply Assign_Transaction_Price_fairA. 
+apply Is_fair_asks_perm with (M1:=(Match (Decr_Bid.sort B) (Incr_Ask.sort A)))(M2:=(Match (Decr_Bid.sort B) (Incr_Ask.sort A)))(A1:=(Incr_Ask.sort A))(A2:=A). auto. apply Permulation_perm.
+apply Permutation.Permutation_sym. apply Incr_Ask.Permuted_sort. 
+ apply Match_Fair_ask. 
+apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply Decr_Bid.Sorted_sort.
+apply perm_nodup with (l:=(ids A)). apply ids_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H. 
+apply Incr_Ask.Sorted_sort.
+}
+                 { unfold UM. apply Assign_Transaction_Price_fairB. 
+apply Is_fair_bids_perm with (M1:=(Match (Decr_Bid.sort B) (Incr_Ask.sort A)))(M2:=(Match (Decr_Bid.sort B) (Incr_Ask.sort A)))(B1:=(Decr_Bid.sort B))(B2:=B). auto. apply Permulation_perm.
+apply Permutation.Permutation_sym. apply Decr_Bid.Permuted_sort. 
+ apply Match_Fair_bid. 
+apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply Decr_Bid.Sorted_sort. }  Qed.
+
+
+Theorem UM_Matching (B:list order)(A:list order):
+admissible B A -> Matching (UM B A) B A.
+Proof. unfold admissible. intros. unfold UM. apply Assign_Transaction_Price_Matching. auto.
+intros. split.
+{ unfold Last_Transaction_Price. apply Match_priceB in H0. rewrite (price_perm _ (Decr_Bid.sort B) _).
+ apply H. apply Permulation_perm. apply Decr_Bid.Permuted_sort. auto. apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply Decr_Bid.Sorted_sort. apply perm_nodup with (l:=(ids A)). apply ids_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H. 
+apply Incr_Ask.Sorted_sort. }
+{ unfold Last_Transaction_Price. apply Match_priceA in H0. rewrite (price_perm _ (Incr_Ask.sort A) _).
+ apply H. apply Permulation_perm. apply Incr_Ask.Permuted_sort. auto. apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply Decr_Bid.Sorted_sort. apply perm_nodup with (l:=(ids A)). apply ids_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H. 
+apply Incr_Ask.Sorted_sort. } eapply Maching_permutation_full with (B1:=(Decr_Bid.sort B))(A1:=(Incr_Ask.sort A)).
+apply Permulation_perm. apply Permutation.Permutation_sym. apply Decr_Bid.Permuted_sort.
+apply Permulation_perm. apply Permutation.Permutation_sym. apply Incr_Ask.Permuted_sort.
+ exact. eapply Match_Matching. 
+ apply perm_nodup with (l:=(ids A)). apply ids_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H.
+apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+  Qed.
+
+
+Theorem UM_Is_optimal_uniform (B:list order)(A:list order):
+admissible B A -> Is_optimal_uniform (UM B A) B A.
+Proof. unfold admissible. intros. 
+               split. split. unfold UM. unfold Uniform.
+apply Assign_Transaction_Price_is_uniform. apply UM_Matching. auto. intros. unfold UM. 
+rewrite <- Assign_Transaction_Price_size. apply Match_OPT.
+apply perm_nodup with (l:=(timesof B)). apply timesof_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply perm_nodup with (l:=(timesof A)). apply timesof_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H.
+ apply perm_nodup with (l:=(ids A)). apply ids_perm. apply Permulation_perm. apply Incr_Ask.Permuted_sort. apply H.
+apply perm_nodup with (l:=(ids B)). apply ids_perm. apply Permulation_perm. apply Decr_Bid.Permuted_sort. apply H. 
+apply Decr_Bid.Sorted_sort. apply Incr_Ask.Sorted_sort. destruct H0. split. auto. 
+eapply Maching_permutation_full with (B2:=(Decr_Bid.sort B))(A2:=(Incr_Ask.sort A)) in H1. exact H1. 
+apply Permulation_perm.  apply Decr_Bid.Permuted_sort.
+apply Permulation_perm. apply Incr_Ask.Permuted_sort.
+ exact.  Qed.
+
+
+Theorem UM_correct (B:list order)(A:list order):
+admissible B A -> Is_optimal_uniform (UM B A) B A/\ Is_fair (UM B A) B A.
+Proof. intros. split. apply UM_Is_optimal_uniform. auto. apply UM_Fair. auto. Qed.
 
 End UM.
+
+
+Require Extraction.
+
+(*This part is tellling coq to extract nat, bool, additions, multiplications, equality and less than
+ Into the corrsponding OCaml types. *)
+Require Import ExtrOcamlBasic.
+Require Import ExtrOcamlString.
+Extract Inductive bool => "bool" [ "true" "false" ].
+Extract Inductive nat => "int"
+  [ "0" "(fun x -> x + 1)" ]
+  "(fun zero succ n -> if n=0 then zero () else succ (n-1))".
+Extract Constant plus => "( + )".
+Extract Constant mult => "( * )".
+Extract Constant Nat.eqb => "( = )".
+Extract Constant Nat.leb => "(<=)".
+
+Extraction  Language OCaml.
+Extraction "Demonstration/certified.ml" UM Qty_ask Qty_bid.

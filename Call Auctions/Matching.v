@@ -23,6 +23,7 @@ for all the above defined notions.
 -----------------------------------------------------------------------------*)
 
 Require Export Competitive.
+Require Export Sorted.
 (*Require Export Quantity.*)
 
 Section Matching.
@@ -109,6 +110,20 @@ Proof. unfold perm. unfold Matching. unfold Tvalid. unfold valid. intros.
        destruct H4 as [a0 H4]. exists b0. exists a0. destruct H4. 
        destruct H5. split. eauto. split. eauto. auto. } { intros. 
        apply H1. eauto.  } { intro. intro. apply H1. eauto. } Qed.
+
+Lemma Maching_permutation_full (A1 A2 B1 B2: list order)(M1 M2: list transaction):
+perm B1 B2 -> perm A1 A2 -> perm M1 M2 -> Matching M1 B1 A1 -> Matching M2 B2 A2.
+Proof. unfold perm. unfold Matching. unfold Tvalid. unfold valid. intros.
+       move /andP in H. destruct H. move /andP in H0. destruct H0. 
+       move /andP in H1. destruct H1.
+       repeat split. { intros. assert(In t M1). eauto. apply H2 in H7. 
+       destruct H7 as [b0 H7]. destruct H7 as [a0 H7]. exists b0. exists a0.
+       destruct H7. destruct H8. split. eauto. split. eauto. auto. } { intros. 
+       assert(In b B1). eauto. rewrite <- (perm_Qty_bid M1 M2 (id b)).
+       apply H2. auto. unfold perm. apply /andP. auto. }
+       { intros. assert(In a A1). eauto. rewrite <- (perm_Qty_ask M1 M2 (id a)).
+       apply H2. auto. unfold perm. apply /andP. auto. } Qed.
+
 
 Lemma Maching_perm_wB (A1 A2 B1 B2: list order)(M1 M2: list transaction)(w:order):
 perm B1 B2 -> perm A1 A2 -> Matching M2 (w :: B2) A2 -> Matching M2 (w :: B1) A1.
@@ -488,6 +503,51 @@ Proof. rewrite Q_Qty_ask. unfold Q_by_asks. intros. apply ids_ask_subset in H0 a
        apply Matching_Vol_A_aux. auto. apply H0. unfold fun_ids_ask.
        eauto. auto. auto. Qed.
 
+Lemma delete_transaction_perm (M1 M2: list transaction)(m:transaction):
+perm M1 M2 -> perm (delete m M1) (delete m M2).
+Proof. intros. apply perm_intro. intros. 
+        assert(Hp1:= H). apply perm_elim with (a:=a) in H.
+       assert(In a M2\/~In a M2). eauto. destruct H0.
+       { assert(In a M1). unfold perm in Hp1. 
+         move /andP in Hp1. destruct Hp1. eauto.
+         assert(m = a \/ m<> a). eauto.
+         destruct H2. subst m. apply countP7 in H1. 
+         apply countP7 in H0. lia. rewrite <- countP9. rewrite <- countP9. lia. 
+         intro. destruct H2. symmetry. auto. intro. destruct H2. symmetry. auto. 
+       }
+       { assert(~In a M1). unfold perm in Hp1. 
+         move /andP in Hp1. destruct Hp1. intro. 
+         assert(In a M2). eauto. destruct (H0 H4). assert(~In a (delete m M1)).
+         intro. apply delete_elim1 in H2. destruct (H1 H2). assert(~In a (delete m M2)).
+         intro. apply delete_elim1 in H3. destruct (H0 H3). apply countP2 in H2.
+         apply countP2 in H3. lia.
+       } Qed.
+
+Lemma ids_ask_perm M1 M2 i:
+perm M1 M2 -> In i (ids_ask_aux M1) ->In i (ids_ask_aux M2).
+Proof. revert M1. induction M2. intros.  apply perm_elim1 in H.
+rewrite H in H0. auto. intros. simpl. apply ids_ask_aux_intro1 in H0.
+destruct H0. destruct H0. assert(In x (a :: M2)). unfold perm in H. 
+         move /andP in H. destruct H.  apply included_elim5 in H. auto. simpl in H2. destruct H2.
+subst a. auto. right. rewrite <- H1. apply ids_ask_intro1 in H2. unfold fun_ids_ask in H2. apply uniq_intro_elim. auto. Qed.
+
+Lemma ids_bid_perm M1 M2 i:
+perm M1 M2 -> In i (ids_bid_aux M1) ->In i (ids_bid_aux M2).
+Proof. revert M1. induction M2. intros.  apply perm_elim1 in H.
+rewrite H in H0. auto. intros. simpl. apply ids_bid_aux_intro1 in H0.
+destruct H0. destruct H0. assert(In x (a :: M2)). unfold perm in H. 
+         move /andP in H. destruct H. apply included_elim5 in H. auto. simpl in H2. destruct H2.
+subst a. auto. right. rewrite <- H1. apply ids_bid_intro1 in H2. unfold fun_ids_bid in H2. apply uniq_intro_elim. auto. Qed.
+
+
+Lemma Vol_perm M1 M2:
+perm M1 M2 -> Vol(M1) = Vol(M2).
+Proof. revert M2. induction M1. intros. apply perm_sym in H. 
+apply perm_elim1 in H. rewrite H. auto. simpl. intros. apply delete_transaction_perm with (m:=a) in H as H2. simpl in H2. replace (t_eqb a a) with true in H2. apply IHM1 in H2.
+rewrite H2. rewrite (Vol_delete_m M2 a). unfold perm in H. move /andP in H. destruct H. 
+assert(In a (a :: M1)). auto. eauto. lia. auto.
+Qed.
+
 End Matching.
 
 Section Uniform.
@@ -500,6 +560,54 @@ match M with
 |nil => nil
 |m::M => tprice m::tprices2 M
 end.
+
+Lemma count_in_deleted_tprices (m: transaction)(M: list transaction):
+  In m M -> count (tprice m) (tprices M) = S (count (tprice m) (tprices (delete m M))).
+Proof. { induction M.
+       { simpl. auto. }
+       { intro h1. destruct h1. 
+         { subst a. simpl. replace (Nat.eqb (tprice m) (tprice m)) with true.
+           replace (t_eqb m m) with true. auto. auto. auto.
+         }
+         { simpl. destruct (Nat.eqb (tprice m) (tprice a)) eqn: h2.
+           { destruct(t_eqb m a) eqn:Ha.
+             { auto. } 
+             { simpl. rewrite h2.  apply IHM in H. lia. }
+           }
+           { simpl. destruct(t_eqb m a) eqn:Ha.
+              { move /eqP in Ha. subst a. move /eqP in h2. destruct h2. auto. }
+              {  simpl. rewrite h2. apply IHM. auto. } 
+           }
+         }
+      } 
+      } Qed.
+
+Lemma included_tprices M1 M2: 
+included M1 M2 -> included (tprices M1) (tprices M2).
+Proof. { revert M2. induction M1 as [| m1].
+       { simpl. auto. }
+       { intros M2 h1.
+         assert (h2: In m1 M2). eauto.
+         assert (h3: included M1 (delete m1 M2)). eauto.
+         assert (h3a: included (tprices M1) (tprices (delete m1 M2))).
+         { auto. }
+         assert(h4:count (tprice m1)(tprices M2)= 
+         S (count (tprice m1) (tprices (delete m1 M2)))).
+         { eauto using count_in_deleted_tprices. }
+         eapply included_intro.
+         intro x.  simpl. destruct (Nat.eqb x (tprice m1)) eqn: C1.
+         { move /eqP in C1. subst x.
+           rewrite h4.
+           eapply included_elim in h3a  as h3b. instantiate (1 := tprice m1) in h3b.
+           lia. }
+         { assert (h3b: included M1 M2). eapply included_elim4; apply h1. 
+           apply IHM1 in h3b as h3c. auto. } } } Qed.
+
+Lemma tprices_perm  (M1 M2:list transaction):
+perm M1 M2 -> perm (tprices M1) (tprices M2).
+Proof. unfold perm. intros. move /andP in H. destruct H.
+       apply included_tprices in H0. 
+       apply included_tprices in H. apply /andP. auto.  Qed.
 
 Definition Uniform (M : list transaction) := uniform (tprices M).
 
@@ -541,6 +649,13 @@ Proof. { unfold Uniform. intros H1 H2 H3. simpl.
          apply uniform_intro. intros x H5. 
          apply uniform_elim4 with (a1:= x) in H4. subst. all:auto. } Qed.
 
+
+Lemma Uniform_perm (M1 M2:list transaction): 
+perm M1 M2 -> Uniform M1 -> Uniform M2.
+Proof. unfold Uniform. intros. apply tprices_perm in H. 
+eapply uniform_subset. apply perm_elim2 in H.
+unfold "[=]" in H. apply H. auto. Qed.
+
 Definition Is_uniform M B A := (Uniform M /\ Matching M B A).
 
 Definition Is_optimal_uniform M B A := Is_uniform M B A -> forall M', Is_uniform M' B A /\ Vol(M) >= Vol(M').
@@ -549,7 +664,7 @@ End Uniform.
 
 
 Section Maximum.
-Definition Is_max M B A := Matching M B A -> forall M', Matching M' B A /\ Vol(M) >= Vol(M').
+Definition Is_max M B A := forall M', Matching M' B A -> Matching M B A /\ Vol(M') <= Vol(M).
 
 End Maximum.
 
@@ -568,6 +683,31 @@ forall a a', (In a A)/\(In a' A)/\(acompetitive a a'/\~eqcompetitive a a')/\(In 
 Definition Is_fair (M: list transaction) (B A: list order) 
   :=  Is_fair_asks M A /\ Is_fair_bids M B.
 
+Lemma Is_fair_asks_perm M1 M2 A1 A2:
+perm M1 M2  -> perm A1 A2 -> Is_fair_asks M1 A1 -> Is_fair_asks M2 A2.
+Proof. unfold Is_fair_asks. intros. destruct H2. destruct H3. destruct H4.
+assert(In a A1). unfold perm in H0. move /andP in H0. destruct H0. 
+ eauto. 
+assert(In a' A1). unfold perm in H0. move /andP in H0. destruct H0. 
+ eauto.  assert(In (id a') (ids_ask_aux M1)). apply ids_ask_perm with (M1:=M2).
+auto. auto. 
+ rewrite <- (perm_Qty_ask M1 M2 _). 
+eapply H1.  split. auto. split. exact H7. all:auto. 
+Qed.
+
+Lemma Is_fair_bids_perm M1 M2 B1 B2:
+perm M1 M2  -> perm B1 B2 -> Is_fair_bids M1 B1 -> Is_fair_bids M2 B2.
+Proof. unfold Is_fair_bids. intros. destruct H2. destruct H3. destruct H4.
+assert(In b B1). unfold perm in H0. move /andP in H0. destruct H0. 
+ eauto. 
+assert(In b' B1). unfold perm in H0. move /andP in H0. destruct H0. 
+ eauto.  assert(In (id b') (ids_bid_aux M1)). apply ids_bid_perm with (M1:=M2).
+auto. auto. 
+ rewrite <- (perm_Qty_bid M1 M2 _). 
+eapply H1.  split. auto. split. exact H7. all:auto. 
+Qed.
+
+
 End Fair.
 
 
@@ -576,6 +716,13 @@ Section  Admissible.
 Definition admissible (B A :list order) := 
 (NoDup (ids B))/\(NoDup (ids A))/\
 (NoDup (timesof B))/\(NoDup (timesof A)).
+
+Lemma admissible_perm B1 A1 B2 A2:
+perm B1 B2 -> perm A1 A2 -> admissible B1 A1 -> admissible B2 A2.
+Proof. unfold admissible. intros. destruct H1. destruct H2. 
+destruct H3. apply ids_perm in H as H5. apply ids_perm in H0 as H6.
+apply timesof_perm in H as H7. apply timesof_perm in H0 as H8.
+split. eauto. split. eauto. split. eauto. eauto. Qed.
 
 End  Admissible.
 (* Extra Lemma : Delete later if unused *)
@@ -632,3 +779,7 @@ right. auto. split. intros. apply H1 in H3. simpl in H3. destruct (Nat.eqb (idb 
 lia. lia. intros. apply H2 in H3. simpl in H3. destruct (Nat.eqb (ida m0) (id a) ).
 lia. lia. auto. Qed.
 
+
+Lemma liaforrun (b a : order): 
+oquantity b < oquantity a -> 
+~ (oquantity a - oquantity b < 1). lia. Qed.

@@ -18,6 +18,10 @@ module Nat =
   let ltb = (<)
  end
 
+(** val lt_eq_lt_dec : int -> int -> bool option **)
+
+let rec lt_eq_lt_dec = fun n m -> if n>m then None else Some (n<m)
+
 type color =
 | Red
 | Black
@@ -26,10 +30,6 @@ module Color =
  struct
   type t = color
  end
-
-(** val lt_eq_lt_dec : int -> int -> bool option **)
-
-let rec lt_eq_lt_dec = fun n m -> if n>m then None else Some (n<m)
 
 type order = { id : int; otime : int; oquantity : int; oprice : int }
 
@@ -41,16 +41,6 @@ type command =
 | Del
 
 type instruction = { cmd : command; ord : order }
-
-(** val pr1 : ('a1 * 'a2) -> 'a1 **)
-
-let pr1 = function
-| pr3,_ -> pr3
-
-(** val pr2 : ('a1 * 'a2) -> 'a2 **)
-
-let pr2 = function
-| _,pr3 -> pr3
 
 module TB =
  struct
@@ -976,8 +966,8 @@ let at_id = function
 
 let eMatch_ask a a0 a1 a2 b =
   let rec fix_F x =
-    let b0 = pr1 x in
-    let a3 = pr1 (pr2 (pr2 x)) in
+    let b0 = let pr1,_ = x in pr1 in
+    let a3 = let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1 in
     (match TB.max_elt b0 with
      | Some e ->
        if Nat.eqb (sub a3.oprice e.oprice) 0
@@ -985,41 +975,100 @@ let eMatch_ask a a0 a1 a2 b =
              | Some s ->
                if s
                then let b1 = TB.remove e b0 in
-                    let b0_id = T_id.remove e (pr1 (pr2 (pr2 (pr2 x)))) in
+                    let b0_id =
+                      T_id.remove e
+                        (let pr1,_ =
+                           let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2
+                           in
+                           pr2
+                         in
+                         pr1)
+                    in
                     let bAM =
-                      let y = b1,((pr1 (pr2 x)),({ id = a3.id; otime =
-                        a3.otime; oquantity = (sub a3.oquantity e.oquantity);
-                        oprice =
-                        a3.oprice },(b0_id,(pr2 (pr2 (pr2 (pr2 x)))))))
+                      let y =
+                        b1,((let pr1,_ = let _,pr2 = x in pr2 in pr1),({ id =
+                        a3.id; otime = a3.otime; oquantity =
+                        (sub a3.oquantity e.oquantity); oprice =
+                        a3.oprice },(b0_id,(let _,pr2 =
+                                              let _,pr2 =
+                                                let _,pr2 =
+                                                  let _,pr2 = x in pr2
+                                                in
+                                                pr2
+                                              in
+                                              pr2
+                                            in
+                                            pr2))))
                       in
                       fix_F y
                     in
                     ((((bt bAM),(at bAM)),(bt_id bAM)),(at_id bAM)),({ idb =
                     e.id; ida = a3.id; tquantity = e.oquantity }::(mt bAM))
-               else ((((TB.remove e b0),(pr1 (pr2 x))),(T_id.remove e
-                                                         (pr1
-                                                           (pr2 (pr2 (pr2 x)))))),
-                      (pr2 (pr2 (pr2 (pr2 x))))),({ idb = e.id; ida = a3.id;
-                      tquantity = a3.oquantity }::[])
+               else ((((TB.remove e b0),(let pr1,_ = let _,pr2 = x in pr2 in
+                                         pr1)),(T_id.remove e
+                                                 (let pr1,_ =
+                                                    let _,pr2 =
+                                                      let _,pr2 =
+                                                        let _,pr2 = x in pr2
+                                                      in
+                                                      pr2
+                                                    in
+                                                    pr2
+                                                  in
+                                                  pr1))),(let _,pr2 =
+                                                            let _,pr2 =
+                                                              let _,pr2 =
+                                                                let _,pr2 = x
+                                                                in
+                                                                pr2
+                                                              in
+                                                              pr2
+                                                            in
+                                                            pr2
+                                                          in
+                                                          pr2)),({ idb =
+                      e.id; ida = a3.id; tquantity = a3.oquantity }::[])
              | None ->
                ((((TB.add { id = e.id; otime = e.otime; oquantity =
                     (sub e.oquantity a3.oquantity); oprice = e.oprice }
-                    (TB.remove e b0)),(pr1 (pr2 x))),(T_id.add { id = e.id;
-                                                       otime = e.otime;
-                                                       oquantity =
-                                                       (sub e.oquantity
-                                                         a3.oquantity);
-                                                       oprice = e.oprice }
-                                                       (T_id.remove e
-                                                         (pr1
-                                                           (pr2 (pr2 (pr2 x))))))),
-                 (pr2 (pr2 (pr2 (pr2 x))))),({ idb = e.id; ida = a3.id;
-                 tquantity = a3.oquantity }::[]))
-       else (((b0,(TA.add a3 (pr1 (pr2 x)))),(pr1 (pr2 (pr2 (pr2 x))))),
-              (T_id.add a3 (pr2 (pr2 (pr2 (pr2 x)))))),[]
+                    (TB.remove e b0)),(let pr1,_ = let _,pr2 = x in pr2 in pr1)),
+                 (T_id.add { id = e.id; otime = e.otime; oquantity =
+                   (sub e.oquantity a3.oquantity); oprice = e.oprice }
+                   (T_id.remove e
+                     (let pr1,_ =
+                        let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in
+                        pr2
+                      in
+                      pr1)))),(let _,pr2 =
+                                 let _,pr2 =
+                                   let _,pr2 = let _,pr2 = x in pr2 in pr2
+                                 in
+                                 pr2
+                               in
+                               pr2)),({ idb = e.id; ida = a3.id; tquantity =
+                 a3.oquantity }::[]))
+       else (((b0,(TA.add a3 (let pr1,_ = let _,pr2 = x in pr2 in pr1))),
+              (let pr1,_ =
+                 let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr2
+               in
+               pr1)),(T_id.add a3
+                       (let _,pr2 =
+                          let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2
+                          in
+                          pr2
+                        in
+                        pr2))),[]
      | None ->
-       (((TB.Leaf,(TA.add a3 (pr1 (pr2 x)))),(pr1 (pr2 (pr2 (pr2 x))))),
-         (T_id.add a3 (pr2 (pr2 (pr2 (pr2 x)))))),[])
+       (((TB.Leaf,(TA.add a3 (let pr1,_ = let _,pr2 = x in pr2 in pr1))),
+         (let pr1,_ =
+            let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr2
+          in
+          pr1)),(T_id.add a3
+                  (let _,pr2 =
+                     let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in
+                     pr2
+                   in
+                   pr2))),[])
   in fix_F (a,(a0,(a1,(a2,b))))
 
 (** val eMatch_bid :
@@ -1028,46 +1077,140 @@ let eMatch_ask a a0 a1 a2 b =
 
 let eMatch_bid a a0 a1 a2 b =
   let rec fix_F x =
-    let a3 = pr1 (pr2 x) in
-    let b0 = pr1 (pr2 (pr2 x)) in
+    let a3 = let pr1,_ = let _,pr2 = x in pr2 in pr1 in
+    let b0 = let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1 in
     (match TA.max_elt a3 with
      | Some e ->
        if Nat.eqb (sub e.oprice b0.oprice) 0
        then (match lt_eq_lt_dec b0.oquantity e.oquantity with
              | Some s ->
                if s
-               then ((((pr1 x),(TA.add { id = e.id; otime = e.otime;
-                                 oquantity = (sub e.oquantity b0.oquantity);
-                                 oprice = e.oprice } (TA.remove e a3))),
-                      (pr1 (pr2 (pr2 (pr2 x))))),(T_id.add { id = e.id;
-                                                   otime = e.otime;
-                                                   oquantity =
-                                                   (sub e.oquantity
-                                                     b0.oquantity); oprice =
-                                                   e.oprice }
-                                                   (T_id.remove e
-                                                     (pr2 (pr2 (pr2 (pr2 x))))))),({ idb =
-                      b0.id; ida = e.id; tquantity = b0.oquantity }::[])
-               else ((((pr1 x),(TA.remove e a3)),(pr1 (pr2 (pr2 (pr2 x))))),
-                      (T_id.remove e (pr2 (pr2 (pr2 (pr2 x)))))),({ idb =
-                      b0.id; ida = e.id; tquantity = b0.oquantity }::[])
+               then ((((let pr1,_ = x in pr1),(TA.add { id = e.id; otime =
+                                                e.otime; oquantity =
+                                                (sub e.oquantity b0.oquantity);
+                                                oprice = e.oprice }
+                                                (TA.remove e a3))),(let pr1,_ =
+                                                                    let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    x
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr1)),
+                      (T_id.add { id = e.id; otime = e.otime; oquantity =
+                        (sub e.oquantity b0.oquantity); oprice = e.oprice }
+                        (T_id.remove e
+                          (let _,pr2 =
+                             let _,pr2 =
+                               let _,pr2 = let _,pr2 = x in pr2 in pr2
+                             in
+                             pr2
+                           in
+                           pr2)))),({ idb = b0.id; ida = e.id; tquantity =
+                      b0.oquantity }::[])
+               else ((((let pr1,_ = x in pr1),(TA.remove e a3)),(let pr1,_ =
+                                                                   let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    x
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr2
+                                                                   in
+                                                                   pr2
+                                                                 in
+                                                                 pr1)),
+                      (T_id.remove e
+                        (let _,pr2 =
+                           let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2
+                           in
+                           pr2
+                         in
+                         pr2))),({ idb = b0.id; ida = e.id; tquantity =
+                      b0.oquantity }::[])
              | None ->
                let a4 = TA.remove e a3 in
-               let a0_id = T_id.remove e (pr2 (pr2 (pr2 (pr2 x)))) in
+               let a0_id =
+                 T_id.remove e
+                   (let _,pr2 =
+                      let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in
+                      pr2
+                    in
+                    pr2)
+               in
                let bAM =
-                 let y = (pr1 x),(a4,({ id = b0.id; otime = b0.otime;
-                   oquantity = (sub b0.oquantity e.oquantity); oprice =
-                   b0.oprice },((pr1 (pr2 (pr2 (pr2 x)))),a0_id)))
+                 let y = (let pr1,_ = x in pr1),(a4,({ id = b0.id; otime =
+                   b0.otime; oquantity = (sub b0.oquantity e.oquantity);
+                   oprice =
+                   b0.oprice },((let pr1,_ =
+                                   let _,pr2 =
+                                     let _,pr2 = let _,pr2 = x in pr2 in pr2
+                                   in
+                                   pr2
+                                 in
+                                 pr1),a0_id)))
                  in
                  fix_F y
                in
                ((((bt bAM),(at bAM)),(bt_id bAM)),(at_id bAM)),({ idb =
                b0.id; ida = e.id; tquantity = e.oquantity }::(mt bAM)))
-       else ((((TB.add b0 (pr1 x)),a3),(T_id.add b0 (pr1 (pr2 (pr2 (pr2 x)))))),
-              (pr2 (pr2 (pr2 (pr2 x))))),[]
+       else ((((TB.add b0 (let pr1,_ = x in pr1)),a3),(T_id.add b0
+                                                        (let pr1,_ =
+                                                           let _,pr2 =
+                                                             let _,pr2 =
+                                                               let _,pr2 = x
+                                                               in
+                                                               pr2
+                                                             in
+                                                             pr2
+                                                           in
+                                                           pr2
+                                                         in
+                                                         pr1))),(let _,pr2 =
+                                                                   let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    x
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr2
+                                                                   in
+                                                                   pr2
+                                                                 in
+                                                                 pr2)),[]
      | None ->
-       ((((TB.add b0 (pr1 x)),TA.Leaf),(T_id.add b0 (pr1 (pr2 (pr2 (pr2 x)))))),
-         (pr2 (pr2 (pr2 (pr2 x))))),[])
+       ((((TB.add b0 (let pr1,_ = x in pr1)),TA.Leaf),(T_id.add b0
+                                                        (let pr1,_ =
+                                                           let _,pr2 =
+                                                             let _,pr2 =
+                                                               let _,pr2 = x
+                                                               in
+                                                               pr2
+                                                             in
+                                                             pr2
+                                                           in
+                                                           pr2
+                                                         in
+                                                         pr1))),(let _,pr2 =
+                                                                   let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    let _,pr2 =
+                                                                    x
+                                                                    in
+                                                                    pr2
+                                                                    in
+                                                                    pr2
+                                                                   in
+                                                                   pr2
+                                                                 in
+                                                                 pr2)),[])
   in fix_F (a,(a0,(a1,(a2,b))))
 
 (** val search_order : T_id.t -> int -> T_id.elt option **)
@@ -1087,17 +1230,17 @@ let rec search_order t0 i =
 let eDel_order b a i b_id a_id =
   let o = search_order b_id i in
   (match o with
-   | Some e ->
+   | Some a0 ->
      let o0 = search_order a_id i in
      (match o0 with
-      | Some e0 ->
-        ((((TB.remove e b),(TA.remove e0 a)),(T_id.remove e b_id)),(T_id.remove
-                                                                    e0 a_id)),[]
-      | None -> ((((TB.remove e b),a),(T_id.remove e b_id)),a_id),[])
+      | Some a1 ->
+        ((((TB.remove a0 b),(TA.remove a1 a)),(T_id.remove a0 b_id)),
+          (T_id.remove a1 a_id)),[]
+      | None -> ((((TB.remove a0 b),a),(T_id.remove a0 b_id)),a_id),[])
    | None ->
      let o0 = search_order a_id i in
      (match o0 with
-      | Some e -> (((b,(TA.remove e a)),b_id),(T_id.remove e a_id)),[]
+      | Some a0 -> (((b,(TA.remove a0 a)),b_id),(T_id.remove a0 a_id)),[]
       | None -> (((b,a),b_id),a_id),[]))
 
 (** val eProcess_instruction :

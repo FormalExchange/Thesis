@@ -853,10 +853,10 @@ Proof.
  destruct (rbal'_match l x r); ok.
 Qed.
 
- Hint Rewrite In_node_iff In_leaf_iff
+#[export] Hint Rewrite In_node_iff In_leaf_iff
  makeRed_spec makeBlack_spec lbal_spec rbal_spec rbal'_spec : rb.
  
-Hint Rewrite In_node_iff In_leaf_iff
+#[export] Hint Rewrite In_node_iff In_leaf_iff
  makeRed_spec_tree makeBlack_spec_tree lbal_spec_tree rbal_spec_tree : rbtree.
 
 Ltac descolor := destruct_all Color.t.
@@ -1071,8 +1071,8 @@ Proof.
 Qed.
 
 
-Hint Rewrite ins_spec : rb.
-Hint Rewrite ins_spec1_tree ins_spec2_tree : rbtree.
+#[export] Hint Rewrite ins_spec : rb.
+#[export] Hint Rewrite ins_spec1_tree ins_spec2_tree : rbtree.
 
 #[global]
 Instance ins_ok s x `{Ok s} : Ok (ins x s).
@@ -1120,8 +1120,8 @@ Proof. unfold add. rewrite makeBlack_spec_tree.
 apply ins_spec_tree. 
 Qed.
 
-Hint Rewrite add_spec' : rb.
-Hint Rewrite add_spec'2_tree add_spec'1_tree: rbtree.
+#[export] Hint Rewrite add_spec' : rb.
+#[export] Hint Rewrite add_spec'2_tree add_spec'1_tree: rbtree.
 
 Lemma add_spec s x y `{Ok s} :
  InT y (add x s) <-> X.eq y x \/ InT y s.
@@ -1432,8 +1432,8 @@ Proof.
    * apply lbal_ok; ok.
 Qed.
 
-Hint Rewrite lbalS_spec rbalS_spec : rb.
-Hint Rewrite lbalS_spec_tree rbalS_spec_tree : rbtree.
+#[export] Hint Rewrite lbalS_spec rbalS_spec : rb.
+#[export] Hint Rewrite lbalS_spec_tree rbalS_spec_tree : rbtree.
 
 (** ** Append for deletion *)
 
@@ -1632,8 +1632,8 @@ Proof.
         * apply lbalS_spec_tree. right. right. apply InRighttree. auto.
 Qed.
 
-Hint Rewrite append_spec : rb.
-Hint Rewrite append_spec_tree : rbtree.
+#[export] Hint Rewrite append_spec : rb.
+#[export] Hint Rewrite append_spec_tree : rbtree.
 
 Lemma append_ok : forall x l r `{Ok l, Ok r},
  lt_tree x l -> gt_tree x r -> Ok (append l r).
@@ -1787,7 +1787,7 @@ induction s.
                             ---- apply rbalS_spec_tree. auto.
 } Qed.
 
-Hint Rewrite del_spec : rb.
+#[export] Hint Rewrite del_spec : rb.
 
 #[global]
 Instance del_ok s x `{Ok s} : Ok (del x s).
@@ -1816,7 +1816,7 @@ unfold remove. rewrite makeBlack_spec_tree. apply del_spec_tree. auto.
 Qed.
 
 
-Hint Rewrite remove_spec : rb.
+#[export] Hint Rewrite remove_spec : rb.
 
 #[global]
 Instance remove_ok s x `{Ok s} : Ok (remove x s).
@@ -1837,13 +1837,14 @@ Proof.
  - intros.
    rewrite Hl.
    destruct (Hr acc x0); clear Hl Hr.
-   intuition_in; inversion_clear H3; intuition_in. 
+   intuition_in. inversion_clear H3; intuition_in. 
     * subst. left. apply InLefttree. constructor. auto.
     * left. apply InLefttree. apply InLefttree. auto.
     * left. apply InLefttree. apply InRighttree. auto.
-    * subst. left. constructor. auto.
-    * left. apply InRighttree. auto.
-    * subst. simpl. auto.
+    * simpl in H3. destruct H3. subst. left. constructor. auto. firstorder. left. apply InRighttree. auto.
+    * inversion H3. subst. simpl. auto. subst. auto. subst. right. simpl. right. auto.
+    * right.  simpl. right.  auto.
+    * right.  simpl. right.  auto.
 Qed.
 
 Lemma elements_spec_tree : forall s x, List.In x (elements s) <-> Intree x s.

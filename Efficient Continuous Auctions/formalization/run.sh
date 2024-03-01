@@ -5,7 +5,32 @@ echo "\nCoq version ${currentver} found on this system\n"
 printf "\n**********First compiling libraries from the earlier works********** ...\n\n"
 printf "\nCompiling basic list libraries...\n\n"
 
-if [ "$(printf '%s\n' "8.16.0" "$currentver" | sort -V | head -n1)" = "8.16.0" ]; then 
+if [ "$(printf '%s\n' "8.17.0" "$currentver" | sort -V | head -n1)" = "8.17.0" ]; then 
+
+coqc -w "-all" -compat 8.15 NSS2021_lib.v
+
+printf "Compiling definitions and lemmas...\n\n"
+
+coqc -w "-all" -compat 8.15 Definitions.v
+
+coqc -w "-all" -compat 8.15 Properties.v
+
+printf "Compiling maximum matching theorem...\n\n"
+coqc -w "-all" -compat 8.15 MaxMatch.v
+
+printf "Compiling local and global uniqueness theorems...\n\n"
+coqc -w "-all" -compat 8.15 UniqueMatch.v
+
+printf "Compiling algorithm and its correctness...\n\n"
+coqc -w "-all" -compat 8.15 Programs.v
+
+printf "Completed compiling all the files associated with the earlier works.\n\n"
+printf "\n**********Now compiling our efficient formalization ********** ...\n\n"
+coqc -w "-all" -compat 8.15 RBT.v
+coqc -w "-all" -compat 8.15 OTypes.v
+coqc -w "-all" -compat 8.15 Efficient.v
+
+elif [ "$(printf '%s\n' "8.16.0" "$currentver" | sort -V | head -n1)" = "8.16.0" ]; then 
 
 coqc -w "-all" -compat 8.14 NSS2021_lib.v
 

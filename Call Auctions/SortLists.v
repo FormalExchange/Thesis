@@ -122,7 +122,7 @@ Module Decr_Ask := Sort SortA_rev.
 Module TranSortD <: TotalLeBool.
 
 Definition t := transaction.
-
+(*
 Fixpoint lebnat x y :=
     match x, y with
     | 0, _ => true
@@ -132,12 +132,17 @@ Fixpoint lebnat x y :=
   Infix "<=?" := lebnat (at level 70, no associativity).
 
 Definition leb t1 t2 := lebnat (tprice t1) (tprice t2).
-
-Theorem lebnat_total : forall a1 a2: nat, lebnat a1 a2 \/ lebnat a2 a1.
-Proof. induction a1;destruct a2; simpl; auto. Qed.
+*)
+Definition leb t1 t2 := incr_price t1 t2.
 
 Theorem leb_total : forall a1 a2, leb a1 a2 \/ leb a2 a1.
-Proof. intros.  unfold leb.  destruct a1. destruct a2. simpl. apply lebnat_total. Qed.
+Proof. unfold leb. unfold incr_price. induction a1;destruct a2 ; simpl; auto.
+ destruct (Nat.leb tprice0 tprice) eqn:H1. auto. move /leP in H1. right. apply /leP. lia.  Qed.
+
+Lemma leb_trans : Transitive leb.
+Proof. { unfold Transitive. unfold leb. unfold incr_price.
+            intros y x z H H1. 
+            move /leP in H1. move /leP in H. apply /leP. lia. } Qed.
 
 (*Transitivity is needed here hence change the module that include transitivity and compare*)
 
@@ -151,7 +156,7 @@ Module TAPSort := Sort TranSortD.
 Module TranSortI <: TotalLeBool.
 
 Definition t := transaction.
-
+(*
 Fixpoint gebnat x y :=
     match x, y with
     | _, 0 => true
@@ -161,24 +166,36 @@ Fixpoint gebnat x y :=
   Infix ">=?" := gebnat (at level 70, no associativity).
 
 Definition leb t1 t2 := gebnat (tprice t1) (tprice t2).
+*)
 
-Theorem gebnat_total : forall a1 a2: nat, gebnat a1 a2 \/ gebnat a2 a1.
-Proof. induction a1;simpl;destruct a2; simpl; auto.  Qed.
-
+Definition leb t1 t2 := dec_price t1 t2.
 Theorem leb_total : forall a1 a2, leb a1 a2 \/ leb a2 a1.
-Proof. intros.  unfold leb.  destruct a1. destruct a2. simpl. apply gebnat_total. Qed.
+Proof. intros.  unfold leb. unfold dec_price.  destruct a1. destruct a2. simpl. 
+destruct (Nat.leb tprice tprice0) eqn:H1. auto. right. move /leP in H1. apply /leP.
+lia. Qed.
 
+Lemma leb_trans : Transitive leb.
+Proof. { unfold Transitive. unfold leb. unfold dec_price.
+            intros y x z H H1. 
+            move /leP in H1. move /leP in H. apply /leP. lia. } Qed.
+ 
 End TranSortI.
 
 Module Incr_M := Sort TranSortI.
 
 Section Sorting.
 
+Lemma count_occ_countM (M:list transaction) a:
+count a M = count_occ trd_eqbP M a.
+Proof. induction M. simpl. auto. simpl. destruct (t_eqb a a0) eqn:H1;destruct (trd_eqbP a0 a) eqn:H2.
+lia. move/eqP in H1. destruct n. auto. move/eqP in H1. destruct H1. auto. lia. Qed.
+ 
 Lemma count_occ_count (B:list order) a:
 count a B = count_occ ord_eqbP B a.
 Proof. induction B. simpl. auto. simpl. destruct (ord_eqb a a0) eqn:H1;destruct (ord_eqbP a0 a) eqn:H2.
 lia. move/eqP in H1. destruct n. auto. move/eqP in H1. destruct H1. auto. lia. Qed.
- 
+
+
 Lemma Permulation_perm (B1 B2:list order):
 Permutation B1 B2 <-> perm B1 B2.
 Proof. split. intro. apply perm_intro. intros.
@@ -186,13 +203,28 @@ eapply Permutation_count_occ with (x:=a) in H. rewrite <- count_occ_count in H. 
  auto. intro. eapply Permutation_count_occ. intro. rewrite <- count_occ_count. rewrite <- count_occ_count.
 apply perm_elim with (a:=x) in H. auto. Qed.
 
+Lemma Permutation_permM (M1 M2:list transaction):
+Permutation M1 M2 <-> perm M1 M2.
+Proof. split. intro. apply perm_intro. intros.
+eapply Permutation_count_occ in H.  rewrite <- count_occ_countM in H. rewrite <- count_occ_countM in H.
+exact H. intro. eapply Permutation_count_occ. intro. rewrite <- count_occ_countM. rewrite <- count_occ_countM.
+apply perm_elim with (a:=x) in H. auto. Qed.
 
-Lemma Sorted_tintro (M: list transaction)(m: transaction):
+
+Lemma Sorted_tintroD (M: list transaction)(m: transaction):
 Sorted dec_price (m::M) -> forall t, In t M -> (Nat.leb (tprice m) (tprice t)).
 Proof. intros. apply Sorted_extends in H. 
 apply Forall_forall with (x:= t) in H.
 auto. auto. unfold Relations_1.Transitive.
 unfold dec_price. intros. move /leP in H1. move /leP in H2.
+apply /leP. auto. lia. Qed.
+
+Lemma Sorted_tintroI (M: list transaction)(m: transaction):
+Sorted incr_price (m::M) -> forall t, In t M -> (Nat.leb (tprice t) (tprice m)).
+Proof. intros. apply Sorted_extends in H. 
+apply Forall_forall with (x:= t) in H.
+auto. auto. unfold Relations_1.Transitive.
+unfold incr_price. intros. move /leP in H1. move /leP in H2.
 apply /leP. auto. lia. Qed.
 
 Lemma Sorted_ointroB (B: list order)(b: order):
@@ -237,10 +269,8 @@ auto. Qed.
 Lemma Sorted_ointro_not_A_tight (A: list order)(a: order):
 Sorted rev_acompetitive (a::A) -> forall x, In x A -> acompetitive x a.
 Proof. intros. apply Sorted_extends in H. 
-apply Forall_forall with (x:= x) in H. all:auto. unfold Relations_1.Transitive.
-assert (Ht:transitive rev_acompetitive). admit. 
-unfold transitive in Ht. intros. specialize (Ht y x0 z).
-auto. Admitted.
+apply Forall_forall with (x:= x) in H. all:auto. 
+apply SortA_rev.leb_trans. Qed.
 
 Lemma Sorted_ointro_not_A (A: list order)(a: order):
 Sorted rev_acompetitive (a::A) -> 
@@ -268,12 +298,17 @@ destruct H1. induction A. auto. apply HdRel_inv in H2.
 apply HdRel_cons. unfold acompetitive in H2. unfold acompetitive. rewrite <- H.  rewrite <- H0.
 auto. Qed.
 
-Lemma SortedreducedM (M: list transaction)(m m': transaction):
+Lemma SortedreducedMD (M: list transaction)(m m': transaction):
 (tprice m = tprice m') -> Sorted dec_price (m::M) -> Sorted dec_price (m'::M).
 Proof. intros. apply Sorted_inv in H0. apply Sorted_cons. apply H0.
 destruct H0. induction M. auto. apply HdRel_inv in H1.
 apply HdRel_cons. unfold dec_price in H1. unfold dec_price. rewrite <- H. auto. Qed.
 
+Lemma SortedreducedMI (M: list transaction)(m m': transaction):
+(tprice m = tprice m') -> Sorted incr_price (m::M) -> Sorted incr_price (m'::M).
+Proof. intros. apply Sorted_inv in H0. apply Sorted_cons. apply H0.
+destruct H0. induction M. auto. apply HdRel_inv in H1.
+apply HdRel_cons. unfold incr_price in H1. unfold incr_price. rewrite <- H. auto. Qed.
 
 Lemma Sorted_perm_acomp_equal A A' (ndt: NoDup (timesof A)): 
 Sorted (fun a a' : order => acompetitive a a') A -> 

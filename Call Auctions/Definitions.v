@@ -295,6 +295,17 @@ move /eqP in hi. subst i. move /eqP in Ha. destruct H. subst. auto.
 auto. simpl. 
 destruct (id a =? i) eqn:hi. auto. apply IHB. auto. Qed.
 
+Lemma price_perm (B1 B2: list order) (i:nat):
+NoDup (ids B1) -> perm B1 B2 -> price B1 i = price B2 i.
+Proof. revert B1 i.  induction B2.  intros B1 i ndb. simpl. intros. apply perm_elim1 in H. rewrite H. simpl. auto.
+intros B1 i ndb. simpl. intros.  apply perm_sym in H. assert(In a B1). unfold perm in H. move /andP in H. destruct H.
+eauto. destruct (id a =? i) eqn:Hi. move /eqP in Hi. subst i. rewrite price_elim1. auto. auto.
+assert(perm (delete a B1) B2). apply perm_intro. intros. apply perm_elim with (a:=a0) in H. simpl in H.
+destruct (ord_eqb a0 a) eqn:Ha. move /eqP in Ha. subst a.  apply countP7 in H0. lia. 
+move /eqP in Ha.  apply countP9 with (l:=B1) in Ha. lia. apply IHB2 with (i:=i) in H1. move /eqP in Hi.
+apply price_delete with (B:=B1) in Hi. lia. apply nodup_ids_delete. auto. Qed.
+
+
 (*-------------timestamp of a given id in list of orders-------------*)
 
 (*Only used when In i (ids B)*)
@@ -359,6 +370,24 @@ Definition Qty_orders (B: list order):nat:=
 fold_right (fun x n => n + (oquantity x)) 0 B.
 
 
+Lemma Qty_orders_delete (B: list order) (b:order):
+In b B -> Qty_orders B = Qty_orders (delete b B) + oquantity b.
+Proof. induction B. firstorder. intros. simpl in H. destruct H.
+simpl. subst a. replace (ord_eqb b b) with true. auto. auto. apply IHB in H. simpl.
+destruct (ord_eqb b a) eqn:Hab. move /eqP in Hab. subst a. auto.
+simpl. lia. Qed. 
+
+
+Lemma Qty_orders_perm (B1 B2: list order):
+perm B1 B2 -> Qty_orders B1 = Qty_orders B2.
+Proof. revert B1. induction B2. intros.
+apply perm_elim1 in H. rewrite H. auto. intros. simpl. 
+unfold perm in H. move /andP in H. destruct H.
+assert(In a B1). eauto.
+ apply included_elim3c in H.
+apply included_elim3 in H0. assert(perm (delete a B1) B2). unfold perm.
+apply /andP. auto. apply IHB2 in H2. rewrite <- H2. apply Qty_orders_delete in H1.
+lia. Qed. 
 
 (*-----------------Deleting an order with given id and it's properties--------------*)
 (*Only used when NoDup (ids B)*)
@@ -531,6 +560,11 @@ Proof. apply reflect_intro. split. apply t_eqb_intro. apply
 t_eqb_elim. Defined. 
 
 Canonical transact_eqType: eqType:= {| Decidable.E:= transaction; Decidable.eqb:= t_eqb; Decidable.eqP:= t_eqP |}.
+
+
+Definition trd_eqbP : forall n m : transaction, {n = m} + { n <> m}.
+Proof. intros.  destruct (n == m) eqn:J. move /eqP in J. left. auto.
+ move /eqP in J. right. auto. Defined.
 
 End Transaction.
 

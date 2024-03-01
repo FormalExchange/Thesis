@@ -405,7 +405,7 @@ Proof. induction B. simpl. auto. intros. apply in_inv4 in H. destruct H.
 Lemma delete_order_perm (B1 B2: list order)(i : nat):
 perm B2 B1 -> perm (delete_order B2 i) (delete_order B1 i).
 Proof. intros. apply perm_intro. intros. 
-        assert(Hp1:= H). apply perm_elim with (a0:=a) in H.
+        assert(Hp1:= H). apply perm_elim with (a:=a) in H.
        assert(In a B2\/~In a B2). eauto. destruct H0.
        { assert(In a B1). unfold perm in Hp1. 
          move /andP in Hp1. destruct Hp1. eauto.
@@ -427,7 +427,7 @@ Proof. intros. apply perm_intro. intros.
 Lemma delete_order_included (B1 B2: list order)(i : nat):
 included B1 (delete_order B2 i) -> included B1 B2.
 Proof. intros. apply included_intro. intros. assert(Hp1:= H). 
-       apply included_elim with (a0:=a) in H. assert(count a 
+       apply included_elim with (a:=a) in H. assert(count a 
        (delete_order B2 i) <= count a B2). eauto. assert(i = 
        (id a) \/i<>(id a)). eauto. destruct H0. { subst i. rewrite
        delete_order_count_eq. lia. }
@@ -445,8 +445,8 @@ rewrite <- price_elim1 with (B:=B2). auto. split.
 unfold perm in H. move /andP in H. destruct H. eauto.
 eauto. split. unfold perm in H. move /andP in H. destruct H. eauto.
 eauto. assert(perm B1 (delete a B2)). unfold perm in H. 
-move /andP in H. destruct H. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H2.
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H2.
 simpl in H2. destruct (ord_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHB1 in H2. move /eqP in Hi. assert(timestamp (delete a B2)
@@ -690,15 +690,15 @@ Proof. revert M2. induction M1. simpl. intros.
 assert(M2=nil). eauto. subst. simpl. auto.
 intros. simpl. destruct(ida a =? i) eqn:Hi. move /eqP in Hi.
 subst. assert(perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. apply Qty_ask_delete2.
 unfold perm in H. move /andP in H. destruct H. eauto.
 assert(perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. move /eqP in Hi.
@@ -734,15 +734,15 @@ Proof. revert M2. induction M1. simpl. intros.
 assert(M2=nil). eauto. subst. simpl. auto.
 intros. simpl. destruct(idb a =? i) eqn:Hi. move /eqP in Hi.
 subst. assert(perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. apply Qty_bid_delete2.
 unfold perm in H. move /andP in H. destruct H. eauto.
 assert(perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. move /eqP in Hi.

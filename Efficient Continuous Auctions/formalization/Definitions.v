@@ -80,7 +80,7 @@ subst a. simpl;auto. simpl;right;auto. Qed.
 
 Lemma ids_elim (B:list order)(i :nat): In i (ids B) -> 
 exists b, (In b B)/\(id b = i).
-Proof. induction B as [|a B IHB ]. intros H. inversion H. intros H. destruct H. 
+Proof. induction B. intros H. inversion H. intros H. destruct H. 
 exists a. auto. apply IHB in H. destruct H as [b H]. exists b. 
 split. simpl;right;apply H. apply H. Qed.
 
@@ -92,17 +92,16 @@ Proof. unfold Subset. intro. intros i H0. apply ids_elim in H0.
  
 Lemma nodup_ids_uniq_order (B:list order)(b1 b2 :order): 
 NoDup (ids B) -> In b1 B ->In b2 B-> id b1 = id b2 -> b1 = b2.
-Proof. revert b1 b2. induction B as [|b B0 IHB0]. simpl. intros b1 b2 H H0 H1 H2.
-        inversion H1. intros. destruct H0;destruct H1. { subst.  auto. } { subst. apply 
-        ids_intro in H1.  simpl in H. rewrite H2 in H. assert(~In (id b2) 
-        (ids B0)). eauto. destruct (H0 H1). } { subst. apply ids_intro in H0.
-        simpl in H. rewrite H2 in H0. assert(~In (id b2) (ids B0)). eauto.
-        destruct (H1 H0). } { apply IHB0.  all: auto.  eauto. } Qed.
+Proof. revert b1 b2. induction B as [|b B0]. simpl. intros. inversion H1.
+       intros. destruct H0;destruct H1. { subst.  auto. } { subst. apply 
+       ids_intro in H1.  simpl in H. rewrite H2 in H. assert(~In (id b2) 
+       (ids B0)). eauto. destruct (H0 H1). } { subst. apply ids_intro in H0.
+       simpl in H. rewrite H2 in H0. assert(~In (id b2) (ids B0)). eauto.
+       destruct (H1 H0). } { apply IHB0.  all: auto.  eauto. } Qed.
 
 Lemma ndp_orders (B:list order) : NoDup (ids B) -> NoDup (ids (uniq B)).
-Proof. induction B as [|a B IHB]. 
-        simpl. auto. intros H. simpl. destruct(memb a B) eqn:HB.
-       move /membP in HB. apply ids_intro in HB. simpl in H. assert(H0:~In (id a)
+Proof. induction B. simpl. auto. intros. simpl. destruct(memb a B) eqn:HB.
+       move /membP in HB. apply ids_intro in HB. simpl in H. assert(~In (id a)
        (ids B)). eauto. destruct (H0 HB). simpl. constructor. move /membP in HB.
        intro. apply ids_elim in H0. destruct H0. destruct H0. apply uniq_intro_elim
        in H0. apply ids_intro in H0. rewrite H1 in H0. assert(~In (id a) (ids B)).
@@ -110,9 +109,9 @@ Proof. induction B as [|a B IHB].
 
 Lemma count_in_deleted_ids (b: order)(B: list order):
   In b B -> count (id b) (ids B) = S (count (id b) (ids (delete b B))).
-Proof. { induction B as [|a B IHB].
+Proof. { induction B.
        { simpl. auto. }
-       { intro h1. destruct h1 as [H | H]. 
+       { intro h1. destruct h1. 
          { subst a. simpl.  destruct ((id b) =? (id b)) eqn: h2.
            { destruct (ord_eqb b b) eqn:h2a.
              {  auto. }
@@ -135,7 +134,7 @@ Proof. { induction B as [|a B IHB].
 
 Lemma included_ids (B1 B2: list order): 
 included B1 B2 -> included (ids B1) (ids B2).
-Proof. { revert B2. induction B1 as [| b1 B1 IHB1].
+Proof. { revert B2. induction B1 as [| b1].
        { simpl. auto. }
        { intros B2 h1.
          assert (h2: In b1 B2). eauto.
@@ -156,31 +155,31 @@ Proof. { revert B2. induction B1 as [| b1 B1 IHB1].
 
 Lemma ids_perm  (B1 B2:list order):
 perm B1 B2 -> perm (ids B1) (ids B2).
-Proof. unfold perm. intros. move /andP in H. destruct H as [H H0].
+Proof. unfold perm. intros. move /andP in H. destruct H.
        apply included_ids in H0. 
        apply included_ids in H. apply /andP. auto.  Qed.
 
 Lemma ids_uniq1 (B:list order)(i :nat): In i (ids (uniq B)) <-> In i (ids B).
-Proof. split. intros H. induction B as [|a B IHB]. simpl  in H. inversion H. simpl in H.
+Proof. split. intros. induction B. simpl  in H. inversion H. simpl in H.
        destruct (memb a B) eqn: H0. simpl. right. apply IHB. auto. simpl in H.
-       destruct H as [H | H]. simpl. subst i. auto. simpl. right. apply IHB. auto.
-       induction B. simpl. auto. simpl. intros H. 
-       destruct H as [H | H]. subst. destruct (memb a B ) eqn:H0. apply IHB.
+       destruct H. simpl. subst i. auto. simpl. right. apply IHB. auto.
+       induction B. simpl. auto. simpl. intros. 
+       destruct H. subst. destruct (memb a B ) eqn:H0. apply IHB.
        move /membP in H0. apply ids_intro in H0. auto. simpl. auto.
        destruct (memb a B ) eqn:H0. apply IHB. auto. simpl. right.
         auto. Qed.
 
 Lemma ids_delete_not_In (B:list order)(a a0:order):
 In (id a0) (ids (delete a B)) -> In (id a0) (ids B).
-Proof. induction B as [| a1 B IHB]. simpl. auto. simpl. destruct(ord_eqb a a1) eqn:Ha.
-intros H. auto. simpl. move /eqP in Ha. subst. auto. simpl. intros H.
-destruct H as [H | H]. auto. right. apply IHB. auto. Qed.
+Proof. induction B. simpl. auto. simpl. destruct(ord_eqb a a1) eqn:Ha.
+intros. auto. simpl. move /eqP in Ha. subst. auto. simpl. intros.
+destruct H. auto. right. apply IHB. auto. Qed.
 
 Lemma nodup_ids_delete (B:list order)(a :order):
 NoDup (ids B) -> NoDup (ids (delete a B)).
-Proof. induction B as [| a0 B IHB]. simpl. auto. simpl. destruct (ord_eqb a a0) eqn:Ha.
-intros H. eauto. intros. simpl. constructor. assert(H0:~In (id a0) (ids B)).
-eauto. intro H1. apply  ids_delete_not_In in H1. destruct (H0 H1). apply IHB.
+Proof. induction B. simpl. auto. simpl. destruct (ord_eqb a a0) eqn:Ha.
+intros. eauto. intros. simpl. constructor. assert(~In (id a0) (ids B)).
+eauto. intro. apply  ids_delete_not_In in H1. destruct (H0 H1). apply IHB.
 eauto. Qed.  
 
 Fixpoint timesof (Omega:list order) :(list nat):=
@@ -191,19 +190,18 @@ end.
 
 Lemma timesof_elim  (Omega:list order)(b:order):
 In b Omega -> In (otime b) (timesof Omega).
-Proof. induction Omega as [|a Omega IHOmega]. simpl.
-intros H. inversion H. simpl. intros H. destruct H.
+Proof. induction Omega. simpl. intros. inversion H. simpl. intros. destruct H.
 subst a. auto. right. apply IHOmega. auto. Qed.
 
 Lemma timesof_intro  (Omega:list order)(i:nat):
 In i (timesof Omega) -> exists b, In b Omega/\i=(otime b).
-Proof. induction Omega as [|a Omega IHOmega]. simpl. intros H. inversion H. simpl. intros H. destruct H.
-subst i. exists a. auto. apply IHOmega in H. destruct H as [x H]. exists x.
+Proof. induction Omega. simpl. intros. inversion H. simpl. intros. destruct H.
+subst i. exists a. auto. apply IHOmega in H. destruct H. exists x.
 split. right. apply H. apply H. Qed.
 
 Lemma count_in_deleted_timesof (b: order)(B: list order):
   In b B -> count (otime b) (timesof B) = S (count (otime b) (timesof (delete b B))).
-Proof. { induction B as [| a B IHB].
+Proof. { induction B.
        { simpl. auto. }
        { intro h1. destruct h1. 
          { subst a. simpl.  destruct (Nat.eqb (otime b) (otime b)) eqn: h2.
@@ -228,7 +226,7 @@ Proof. { induction B as [| a B IHB].
 
 Lemma included_timesof (B1 B2: list order): 
 included B1 B2 -> included (timesof B1) (timesof B2).
-Proof. { revert B2. induction B1 as [| b1 B1 IHB1].
+Proof. { revert B2. induction B1 as [| b1].
        { simpl. auto. }
        { intros B2 h1.
          assert (h2: In b1 B2). eauto.
@@ -249,13 +247,13 @@ Proof. { revert B2. induction B1 as [| b1 B1 IHB1].
 
 Lemma timesof_perm  (B1 B2:list order):
 perm B1 B2 -> perm (timesof B1) (timesof B2).
-Proof. unfold perm. intros. move /andP in H. destruct H as [H H0].
+Proof. unfold perm. intros. move /andP in H. destruct H.
        apply included_timesof in H0. 
        apply included_timesof in H. apply /andP. auto.  Qed.
 
 Lemma timesof_Subset  (B1 B2:list order):
 Subset B1 B2 -> Subset (timesof B1) (timesof B2).
-Proof. unfold Subset. intro H. intros i H0. apply timesof_intro in H0.
+Proof. unfold Subset. intro. intros i H0. apply timesof_intro in H0.
        destruct H0 as [b H0]. destruct H0. apply H in H0.
        apply timesof_elim in H0. subst i. auto. Qed.
 
@@ -269,18 +267,20 @@ Fixpoint price (B: list order)(i:nat):=
 end.
 
 Lemma price_elim1 (B: list order) (b:order): In b B/\NoDup (ids B) -> price B (id b) = oprice b.
-Proof. intros H. induction  B as [|a B IHB]. simpl in  H. inversion H. inversion H0.
-simpl in H. destruct H as [H H0]. destruct H. subst. simpl. assert(id b =? id b = true).
-apply /eqP. auto. rewrite H. auto. simpl. assert(H1:id a =? id b = false). apply /eqP.
-assert(In (id b) (ids B)). apply ids_intro. auto. assert(H2:id a = id b\/id a <> id b).
-eauto. destruct H2. rewrite H2 in H0. apply nodup_elim2 in H0. destruct (H0 H1). eauto. auto. rewrite H1. apply IHB. split. auto. eauto. Qed.
+Proof. intros. induction  B. simpl in  H. inversion H. inversion H0.
+simpl in H. destruct H. destruct H. subst. simpl. assert(id b =? id b = true).
+apply /eqP. auto. rewrite H. auto. simpl. assert(id a =? id b = false). apply /eqP.
+assert(In (id b) (ids B)). apply ids_intro. auto. assert(id a = id b\/id a <> id b).
+eauto. destruct H2. rewrite H2 in H0. apply nodup_elim2 in H0. destruct (H0 H1). eauto. auto.
+rewrite H1. apply IHB. split. auto. eauto. Qed.
 
 Lemma price_delete (B: list order) (b:order)(i:nat):
 id b <> i -> price (delete b B) i = price B i.
-Proof. revert b. induction B as [|a B IHB]. simpl. auto. simpl. intros b H. 
+Proof. revert b. induction B. simpl. auto. simpl. intros. 
 destruct(ord_eqb b a ) eqn:Ha. destruct (id a =? i) eqn:hi.
 move /eqP in hi. subst i. move /eqP in Ha. destruct H. subst. auto.
-auto. simpl. destruct (id a =? i) eqn:hi. auto. apply IHB. auto. Qed.
+auto. simpl. 
+destruct (id a =? i) eqn:hi. auto. apply IHB. auto. Qed.
 
 (*-------------timestamp of a given id in list of orders-------------*)
 
@@ -292,15 +292,15 @@ Fixpoint timestamp (B: list order)(i:nat):=
 end.
 
 Lemma timestamp_elim1 (B: list order) (b:order): In b B/\NoDup (ids B) -> timestamp B (id b) = otime b.
-Proof. intros H. induction B as [|a B IHB]. simpl in  H. inversion H. inversion H0.
+Proof. intros. induction  B. simpl in  H. inversion H. inversion H0.
 simpl in H. destruct H. destruct H. subst. simpl. assert(id b =? id b = true).
-apply /eqP. auto. rewrite H. auto. simpl. assert(H1:id a =? id b = false). apply /eqP.
-assert(In (id b) (ids B)). apply ids_intro. auto. assert(H2:id a = id b\/id a <> id b).
+apply /eqP. auto. rewrite H. auto. simpl. assert(id a =? id b = false). apply /eqP.
+assert(In (id b) (ids B)). apply ids_intro. auto. assert(id a = id b\/id a <> id b).
 eauto. destruct H2. rewrite H2 in H0. apply nodup_elim2 in H0. destruct (H0 H1). eauto. auto. rewrite H1. apply IHB. split. auto. eauto. Qed.
 
 Lemma timestamp_delete (B: list order) (b:order)(i:nat):
 id b <> i -> timestamp (delete b B) i = timestamp B i.
-Proof. revert b. induction B as [|a B IHB]. simpl. auto. simpl. intros b H. 
+Proof. revert b. induction B. simpl. auto. simpl. intros. 
 destruct(ord_eqb b a ) eqn:Ha. destruct (id a =? i) eqn:hi.
 move /eqP in hi. subst i. move /eqP in Ha. destruct H. subst. auto.
 auto. simpl. destruct (id a =? i) eqn:hi. auto. apply IHB. auto. Qed.
@@ -314,26 +314,25 @@ Fixpoint quant (B: list order)(i:nat):=
 end.
 
 Lemma quant_elim (B: list order) (i:nat): ~In i (ids B) -> quant B i = 0. 
-Proof. induction B as [|a B IHB]. simpl. auto. simpl. assert(H:~ In i ((id a) :: (ids B)) 
-       -> ~ In i (ids B) /\ i <> (id a)). apply in_inv4. intro H0. apply H in 
+Proof. induction B. simpl. auto. simpl. assert(~ In i ((id a) :: (ids B)) 
+       -> ~ In i (ids B) /\ i <> (id a)). apply in_inv4. intro. apply H in 
        H0. destruct H0. destruct (id a =? i) eqn:H2. move /eqP in H2. subst i.
        destruct H1. auto. apply IHB. auto. Qed.  
 
 Lemma quant_elim1 (B: list order) (b:order): In b B/\NoDup (ids B) -> 
       quant B (id b) = oquantity b.
-Proof. intros H. induction  B as [|a B IHB]. 
-       simpl in  H. inversion H. inversion H0. simpl in
-       H. destruct H as [H H0]. destruct H. subst. simpl. assert(H:id b =? id b = true).
-       apply /eqP. auto. rewrite H. auto. simpl. assert(H1:id a =? id b = false).
-       apply /eqP. assert(H1:In (id b) (ids B)). apply ids_intro. auto. 
-       assert(H2:id a = id b\/id a <> id b). eauto. destruct H2. rewrite H2 in H0.
+Proof. intros. induction  B. simpl in  H. inversion H. inversion H0. simpl in
+       H. destruct H. destruct H. subst. simpl. assert(id b =? id b = true).
+       apply /eqP. auto. rewrite H. auto. simpl. assert(id a =? id b = false).
+       apply /eqP. assert(In (id b) (ids B)). apply ids_intro. auto. 
+       assert(id a = id b\/id a <> id b). eauto. destruct H2. rewrite H2 in H0.
        apply nodup_elim2 in H0. eauto. auto. rewrite H1. apply IHB. split. auto.
        eauto. Qed.
 
 Lemma quant_uniq (B:list order)(i:nat): NoDup (ids B) -> quant B i = quant (uniq B) i.
-Proof. induction B as [|a B IHB]. simpl. auto. simpl. intros H. 
+Proof. induction B. simpl. auto. simpl. intros H. 
 destruct(id a =? i) eqn:H1.
-{ destruct (memb a B) eqn:Ha.  move /eqP in H1. move /membP in Ha. assert(H0:In (id a) (ids B)).
+{ destruct (memb a B) eqn:Ha.  move /eqP in H1. move /membP in Ha. assert(In (id a) (ids B)).
   apply ids_intro. auto. apply nodup_elim2 in H.  destruct (H H0). simpl.
   rewrite H1. auto.
 }
@@ -351,47 +350,45 @@ end.
 
 Lemma delete_order_ids_elim (B: list order)(b: order):
       ~ In (id b) (ids (delete_order B (id b))). 
-Proof. induction B as [|a B IHB]. 
-       simpl. auto. intro H. simpl in H. destruct (id a =? id b)
+Proof. induction B.  simpl. auto. intro. simpl in H. destruct (id a =? id b)
        eqn:Ha. destruct (IHB H). simpl in H. destruct H. move /eqP in Ha. lia.
        destruct (IHB H). Qed.
 
 Lemma delete_order_intro (B: list order)(b: order)(i : nat):
 In b (delete_order B i) -> In b B.
-Proof. induction B as [|a B IHB].  simpl. auto.  simpl. destruct (id a =? i).
-auto. simpl. intros H. destruct H. left;auto. right;apply IHB;auto. Qed.
+Proof. induction B.  simpl. auto.  simpl. destruct (id a =? i).
+auto. simpl. intros. destruct H. left;auto. right;apply IHB;auto. Qed.
 
 Lemma delete_order_ids_nodup (B: list order)(b: order):
 NoDup (ids B) -> NoDup (ids (delete_order B (id b))).
-Proof. induction B as [|a B IHB].  simpl. auto.  simpl. destruct (id a =? id b).
-intros H.  apply IHB. eauto. 
-intros H. simpl.  constructor.
-intro H0. apply ids_elim in H0. destruct H0 as [x H0]. destruct H0 as [H0 H1].
+Proof. induction B.  simpl. auto.  simpl. destruct (id a =? id b).
+intros.  apply IHB. eauto. 
+intros. simpl.  constructor.
+intro. apply ids_elim in H0. destruct H0. destruct H0.
 apply delete_order_intro in H0. apply ids_intro in H0.
 rewrite H1 in H0. assert(~In (id a) (ids B)). eauto.
 destruct (H2 H0). apply IHB. eauto. Qed.
 
 Lemma delete_order_timesof_nodup (B: list order)(b: order):
 NoDup (timesof B) -> NoDup (timesof (delete_order B (id b))).
-Proof. induction B as [|a B IHB].  simpl. auto.  simpl. destruct (id a =? id b).
-intros H.  apply IHB. eauto. 
-intros H. simpl. constructor.
-intro H0. apply timesof_intro in H0. destruct H0 as [x H0]. destruct H0 as [H0 H1].
+Proof. induction B.  simpl. auto.  simpl. destruct (id a =? id b).
+intros.  apply IHB. eauto. 
+intros. simpl.  constructor.
+intro. apply timesof_intro in H0. destruct H0. destruct H0.
 apply delete_order_intro in H0. apply timesof_elim in H0.
-rewrite <- H1 in H0. assert(H2:~In (otime a) (timesof B)). eauto.
+rewrite <- H1 in H0. assert(~In (otime a) (timesof B)). eauto.
 destruct (H2 H0). apply IHB. eauto. Qed.
 
 Lemma delete_order_count_eq (B: list order)(b: order):
 count b (delete_order B (id b)) = 0.
-Proof. induction B as [|a B IHB].  simpl. auto.  simpl.
+Proof. induction B.  simpl. auto.  simpl.
        destruct (id a =? id b) eqn:Hb. auto. simpl.
        destruct (ord_eqb b a) eqn:Hab. move /eqP in Hab. move /eqP in Hb.
        destruct Hb. subst b. auto. auto. Qed.
        
 Lemma delete_order_count_neq (B: list order)(b: order)(i:nat):
 i <> id b -> count b (delete_order B i) = count b B.
-Proof. induction B as [|a B IHB]. 
-        simpl. auto. intros H. simpl. destruct (id a =? i ) eqn:Ha.
+Proof. induction B. simpl. auto. intros. simpl. destruct (id a =? i ) eqn:Ha.
        destruct (ord_eqb b a) eqn:Hba. move /eqP in Hba. move /eqP in Ha.
        subst a. lia. auto. 
        destruct (ord_eqb b a) eqn:Hba. simpl. rewrite Hba.
@@ -400,29 +397,28 @@ Proof. induction B as [|a B IHB].
 
 Lemma delete_order_count_nIn (B: list order)(b: order)(i:nat):
 ~ In b B -> count b (delete_order B i) = 0.
-Proof. induction B as [|a B IHB]. simpl. auto. intros H. 
-       apply in_inv4 in H. destruct H. 
+Proof. induction B. simpl. auto. intros. apply in_inv4 in H. destruct H. 
        simpl. destruct (id a =? i ) eqn:Ha. eauto. simpl. destruct 
        (ord_eqb b a) eqn:Hba. move /eqP in Hba. subst b. destruct H0. 
        auto. move /eqP in Ha. apply IHB in H. auto. Qed.
 
 Lemma delete_order_perm (B1 B2: list order)(i : nat):
 perm B2 B1 -> perm (delete_order B2 i) (delete_order B1 i).
-Proof. intros H. apply perm_intro. intros a. 
-        assert(Hp1:= H). apply perm_elim with (a0:=a) in H.
-       assert(H0:In a B2\/~In a B2). eauto. destruct H0.
-       { assert(H1:In a B1). unfold perm in Hp1. 
+Proof. intros. apply perm_intro. intros. 
+        assert(Hp1:= H). apply perm_elim with (a:=a) in H.
+       assert(In a B2\/~In a B2). eauto. destruct H0.
+       { assert(In a B1). unfold perm in Hp1. 
          move /andP in Hp1. destruct Hp1. eauto.
-         assert(H2:i = (id a) \/ i<> (id a)). eauto.
+         assert(i = (id a) \/ i<> (id a)). eauto.
          destruct H2. subst i. rewrite delete_order_count_eq.
          rewrite delete_order_count_eq. auto.
          apply delete_order_count_neq with (B:=B1) in H2 as H5.
          apply delete_order_count_neq with (B:=B2) in H2 as H6.
          lia.
        }
-       { assert(H1:~In a B1). unfold perm in Hp1. 
-         move /andP in Hp1. destruct Hp1 as [H1 H2]. intro H3. 
-         assert(H4:In a B2). eauto. destruct (H0 H4).
+       { assert(~In a B1). unfold perm in Hp1. 
+         move /andP in Hp1. destruct Hp1. intro. 
+         assert(In a B2). eauto. destruct (H0 H4).
          apply delete_order_count_nIn with(i:=i) in H0.
          apply delete_order_count_nIn with(i:=i) in H1.
          lia.
@@ -430,9 +426,9 @@ Proof. intros H. apply perm_intro. intros a.
 
 Lemma delete_order_included (B1 B2: list order)(i : nat):
 included B1 (delete_order B2 i) -> included B1 B2.
-Proof. intros H. apply included_intro. intros a. assert(Hp1:= H). 
-       apply included_elim with (a0:=a) in H. assert(H0:count a 
-       (delete_order B2 i) <= count a B2). assert(H0:i = 
+Proof. intros. apply included_intro. intros. assert(Hp1:= H). 
+       apply included_elim with (a:=a) in H. assert(count a 
+       (delete_order B2 i) <= count a B2). eauto. assert(i = 
        (id a) \/i<>(id a)). eauto. destruct H0. { subst i. rewrite
        delete_order_count_eq. lia. }
        { apply delete_order_count_neq with (B:= B2) in H0.
@@ -441,39 +437,39 @@ Proof. intros H. apply included_intro. intros a. assert(Hp1:= H).
 Lemma timeprice_perm (B1 B2: list order)(i:nat):
 perm B1 B2 -> NoDup (ids B1) -> NoDup (ids B2) ->
 timestamp B1 i = timestamp B2 i /\ price B1 i = price B2 i.
-Proof. revert B2. induction B1 as [|a B1 IHB1]. simpl. intros B2 H H0 H1. 
-assert(H2:B2 = nil). eauto. subst B2. simpl. auto.
-simpl. intros B2 H H0 H1. destruct(id a =? i) eqn:Hi. move /eqP in Hi.
+Proof. revert B2. induction B1. simpl. intros. 
+assert(B2 = nil). eauto. subst B2. simpl. auto.
+simpl. intros. destruct(id a =? i) eqn:Hi. move /eqP in Hi.
 subst i. rewrite <- timestamp_elim1 with (B:=B2).
 rewrite <- price_elim1 with (B:=B2). auto. split.
-unfold perm in H. move /andP in H. destruct H as [H H2]. eauto.
-eauto. split. unfold perm in H. move /andP in H. destruct H as [H H2]. eauto.
-eauto. assert(H2:perm B1 (delete a B2)). unfold perm in H. 
-move /andP in H. destruct H as [H H2]. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H2.
+unfold perm in H. move /andP in H. destruct H. eauto.
+eauto. split. unfold perm in H. move /andP in H. destruct H. eauto.
+eauto. assert(perm B1 (delete a B2)). unfold perm in H. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H2.
 simpl in H2. destruct (ord_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
-apply IHB1 in H2. move /eqP in Hi. assert(H3:timestamp (delete a B2)
+apply IHB1 in H2. move /eqP in Hi. assert(timestamp (delete a B2)
 i = timestamp B2 i). apply timestamp_delete. auto. rewrite H3 in H2.
-assert(H4:price (delete a B2) i = price B2 i). apply price_delete.
+assert(price (delete a B2) i = price B2 i). apply price_delete.
 auto. rewrite H4 in H2. auto. eauto.  apply nodup_ids_delete. auto.
  Qed.
 
 Lemma quant_perm (B1 B2: list order)(i:nat):
 perm B1 B2 -> NoDup (ids B1) -> NoDup (ids B2) ->
 quant B1 i = quant B2 i.
-Proof. intros H H0 H1. assert(H2:In i (ids B1)\/~In i (ids B1)). eauto.
-destruct H2. assert(H3:In i (ids B2)). apply ids_perm in H.
+Proof. intros. assert(In i (ids B1)\/~In i (ids B1)). eauto.
+destruct H2. assert(In i (ids B2)). apply ids_perm in H.
 unfold perm in H. 
-move /andP in H. destruct H as [H H3]. eauto. apply ids_elim in H2.
-destruct H2 as [x H2]. destruct H2 as [H2 H4]. subst i. apply ids_elim in H3. 
-destruct H3 as [x0 H3]. destruct H3 as [H3 H4]. 
+move /andP in H. destruct H. eauto. apply ids_elim in H2.
+destruct H2. destruct H2. subst i. apply ids_elim in H3. 
+destruct H3. destruct H3. 
 rewrite quant_elim1. auto.
 rewrite quant_elim1. split.  unfold perm in H. 
-move /andP in H. destruct H as [H H5]. eauto. auto. auto.
-assert(H3:~ In i (ids B2)). intro H3. destruct H2.
+move /andP in H. destruct H. eauto. auto. auto.
+assert(~ In i (ids B2)). intro. destruct H2.
 apply ids_perm in H. unfold perm in H. 
-move /andP in H. destruct H as [H H2]. eauto.
+move /andP in H. destruct H. eauto.
 apply quant_elim in H2. apply quant_elim in H3. lia. Qed.
  
 End Orders_map.
@@ -499,9 +495,8 @@ Lemma t_eqb_ref (x: transaction): t_eqb x x = true.
 Proof. unfold t_eqb. apply /andP. split. apply /andP. split. all: apply /eqP; auto. Qed.
 
 Lemma t_eqb_elim (x y: transaction):  t_eqb x y -> x = y.
-Proof. { unfold t_eqb. destruct x. destruct y. simpl. intros H. move /andP in H.
-         destruct H as [H H0].
-          move /andP in H. destruct H as [H H1]. move /eqP in H. move /eqP in H1.
+Proof. { unfold t_eqb. destruct x. destruct y. simpl. intros. move /andP in H.
+         destruct H. move /andP in H. destruct H. move /eqP in H. move /eqP in H1.
          move /eqP in H0. subst. f_equal. rewrite (BoolDecidableEqDepSet.UIP _ _ 
          tquantity_cond0 tquantity_cond1).  auto. } Qed.
 
@@ -583,17 +578,16 @@ Fixpoint Qty_bid (T: list transaction) (i:nat): (nat):=
 
 Lemma Qty_bid1 (T: list transaction)(t: transaction):
 In t T -> Qty_bid T (idb t) >= tquantity t.
-Proof. induction T as [|a T IHT]. simpl. intro H. inversion H.
-simpl. destruct (idb a =? idb t) eqn: Ht. intros H. destruct H.
-subst. lia. apply IHT in H. lia. intros H.
+Proof. induction T. simpl. intro. inversion H.
+simpl. destruct (idb a =? idb t) eqn: Ht. intros. destruct H.
+subst. lia. apply IHT in H. lia. intros.
  destruct H. subst. move /eqP in Ht. destruct Ht. auto.
  auto. Qed. 
 
 Lemma Qty_bid_elim (T: list transaction) (i:nat): 
 Qty_bid T i >0 -> exists t, In t T/\(idb t = i).
-Proof. induction T as [|a T IHT]. simpl. lia. simpl. intros H. 
-       destruct (idb a =? i) eqn:Hi.
-       exists a. split;auto. apply IHT in H. destruct H as [x H]. exists x.
+Proof. induction T. simpl. lia. simpl. intros. destruct (idb a =? i) eqn:Hi.
+       exists a. split;auto. apply IHT in H. destruct H. exists x.
        split. right;apply H. apply H. Qed.
 
 Fixpoint Qty_ask (T: list transaction) (i:nat): (nat):=
@@ -604,15 +598,14 @@ Fixpoint Qty_ask (T: list transaction) (i:nat): (nat):=
 
 Lemma Qty_ask_elim (T: list transaction) (i:nat): 
 Qty_ask T i >0 -> exists t, In t T/\(ida t = i).
-Proof. induction T as [|a T IHT]. simpl. lia. simpl. intros H. 
-       destruct (ida a =? i) eqn:Hi.
-       exists a. split;auto. apply IHT in H. destruct H as [x H]. exists x.
+Proof. induction T. simpl. lia. simpl. intros. destruct (ida a =? i) eqn:Hi.
+       exists a. split;auto. apply IHT in H. destruct H. exists x.
        split. right;apply H. apply H. Qed.
 
 Lemma Qty_ask1 (T: list transaction)(t: transaction):
 In t T -> Qty_ask T (ida t) >= tquantity t.
-Proof. induction T as [|a T IHT]. simpl. intro H. inversion H.
-simpl. destruct (ida a =? ida t) eqn: Ht. intros H. destruct H.
+Proof. induction T. simpl. intro. inversion H.
+simpl. destruct (ida a =? ida t) eqn: Ht. intros. destruct H.
 subst. lia. apply IHT in H. lia. intros.
  destruct H. subst. move /eqP in Ht. destruct Ht. auto.
  auto. Qed. 
@@ -626,50 +619,50 @@ Fixpoint Qty (T: list transaction) (i1 i2:nat):(nat):=
 
 Lemma Qty_elim (T: list transaction) (i j:nat): 
 Qty T i j >0 -> exists t, In t T/\(ida t = j)/\(idb t = i). 
-Proof. induction T as [|a T IHT]. simpl. lia. simpl. intros H. 
-       destruct ((idb a =? i) && (ida a =? j)) eqn:Hi. exists a. 
-       move /andP in Hi. destruct Hi as [H0 H1].
+Proof. induction T. simpl. lia. simpl. intros. destruct ((idb a =? i) &&
+       (ida a =? j)) eqn:Hi. exists a. move /andP in Hi. destruct Hi.
        move /eqP in H0. move /eqP in H1. subst. auto. apply IHT in H. 
-       destruct H as [x H]. exists x. split. right;apply H. apply H. Qed.
+       destruct H. exists x. split. right;apply H. apply H. Qed.
 
 Lemma Qty_Qty_ask (T: list transaction)(b:order):
 (forall t, In t T -> idb t = id b) -> 
 (forall j, Qty_ask T j = Qty T (id b) j).
-Proof. intros H j. induction T as [|a T IHT]. simpl. auto.
+Proof. intros. induction T. simpl. auto.
       simpl. destruct ((idb a =? id b)) eqn:Hi.
       simpl. destruct (ida a =? j) eqn: Hj.  cut(Qty_ask T j = Qty T (id b) j).
-      lia. apply IHT. intros t H0. apply H. auto. 
-      apply IHT. intros t0 H0. apply H. auto. simpl.
+      lia. apply IHT. intros. apply H. auto. 
+      apply IHT. intros. apply H. auto. simpl.
       destruct (ida a =? j) eqn: Hj. specialize (H a).
       move /eqP in Hi. replace (idb a) with (id b) in Hi.
       destruct Hi. auto. symmetry. apply H. auto. 
-      apply IHT. intros t H0. apply H. auto. Qed.
+      apply IHT. intros. apply H. auto. Qed.
 
 Lemma Qty_Qty_bid (T: list transaction)(b:order):
 (forall t, In t T -> ida t = id b) -> 
 (forall j, Qty_bid T j = Qty T  j (id b)).
-Proof. intros H j. induction T as [|a T IHT]. simpl. auto.
+Proof. intros. induction T. simpl. auto.
       simpl. destruct ((idb a =? j)) eqn:Hi.
       simpl. destruct (ida a =? (id b)) eqn: Hj. auto. 
       specialize (H a).
       move /eqP in Hj. assert(ida a = id b).
       apply H. auto. lia. destruct (ida a =? (id b)) eqn: Hj. 
-      simpl. apply IHT. intros t H0. apply H. auto. simpl. 
-      apply IHT. intros t H0. apply H. auto.  Qed.
+      simpl. apply IHT. intros. apply H. auto. simpl. 
+      apply IHT. intros. apply H. auto.  Qed.
 
 Lemma Qty_ask_M1_M2 (M1 M2: list transaction)(w:order)(i j:nat):
 (forall t : transaction, In t M1 -> idb t = id w) ->
 (forall t : transaction, In t M2 -> idb t = id w ) ->
 Qty M1 (id w) j = Qty M2 (id w) j -> Qty M1 i j = Qty M2 i j.
-Proof. intros H H0 H1. assert(H2:Qty M1 i j = Qty M2 i j\/Qty M1 i j > Qty M2 i j\/Qty M1 i j < Qty M2 i j).
-lia. destruct H2. auto. destruct H2. assert(H3:Qty M1 i j >0). lia. apply Qty_elim in H3. destruct H3 as [x H3]. destruct H3 as [H3 H4]. destruct H4 as [H4 H5]. apply H in H3. subst. rewrite H3. auto.
-assert(H3:Qty M2 i j >0). lia. apply Qty_elim in H3.
-destruct H3 as [x H3]. destruct H3 as [H3 H4]. destruct H4 as [H4 H5]. apply H0 in H3. subst. rewrite H3. auto. Qed.
+Proof. intros. assert(Qty M1 i j = Qty M2 i j\/Qty M1 i j > Qty M2 i j\/Qty M1 i j < Qty M2 i j).
+lia. destruct H2. auto. destruct H2. assert(Qty M1 i j >0). lia. apply Qty_elim in H3.
+destruct H3. destruct H3. destruct H4. apply H in H3. subst. rewrite H3. auto.
+assert(Qty M2 i j >0). lia. apply Qty_elim in H3.
+destruct H3. destruct H3. destruct H4. apply H0 in H3. subst. rewrite H3. auto. Qed.
 
 
 Lemma Qty_ask_delete1 (M: list transaction)(m:transaction)(i:nat):
 ida m <> i -> Qty_ask (delete m M) i = Qty_ask M i.
-Proof. revert m. induction M as [|a M IHM]. simpl. auto. simpl. intros m H. 
+Proof. revert m. induction M. simpl. auto. simpl. intros. 
 destruct(t_eqb m a ) eqn:Ha. destruct (ida a =? i) eqn:hi.
 move /eqP in hi. subst i. move /eqP in Ha. subst m.
  destruct H.  auto.
@@ -678,8 +671,8 @@ destruct (ida a =? i) eqn:hi. auto. apply IHM. auto. Qed.
 
 Lemma Qty_ask_delete2 (M: list transaction)(m:transaction):
 In m M -> tquantity m + Qty_ask (delete m M) (ida m) = Qty_ask M (ida m).
-Proof. revert m. induction M as [|a M IHM]. simpl. intros m H. inversion H.
-intros m H. simpl in H. destruct H. subst a. simpl. 
+Proof. revert m. induction M. simpl. intros. inversion H.
+intros. simpl in H. destruct H. subst a. simpl. 
 destruct (t_eqb m m) eqn:Hm1. destruct (ida m =? ida m) eqn:Hm2.
 auto. move /eqP in Hm2. destruct Hm2. auto. simpl.
 destruct (ida m =? ida m) eqn:Hm2.
@@ -693,19 +686,19 @@ auto. simpl. destruct (ida a =? ida m) eqn:Ha1. lia. auto. Qed.
 
 Lemma perm_Qty_ask (M1 M2: list transaction)(i:nat):
 perm M1 M2 -> Qty_ask M1 i = Qty_ask M2 i.
-Proof. revert M2. induction M1 as [|a M1 IHM1]. simpl. intros M2 H. 
+Proof. revert M2. induction M1. simpl. intros. 
 assert(M2=nil). eauto. subst. simpl. auto.
-intros M2 H. simpl. destruct(ida a =? i) eqn:Hi. move /eqP in Hi.
-subst. assert(H0:perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H as [H H0]. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+intros. simpl. destruct(ida a =? i) eqn:Hi. move /eqP in Hi.
+subst. assert(perm M1 (delete a M2)). unfold perm in H. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. apply Qty_ask_delete2.
-unfold perm in H. move /andP in H. destruct H as [H H1]. eauto.
-assert(H0:perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H as [H H0]. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+unfold perm in H. move /andP in H. destruct H. eauto.
+assert(perm M1 (delete a M2)). unfold perm in H. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. move /eqP in Hi.
@@ -713,7 +706,7 @@ apply Qty_ask_delete1. auto. Qed.
 
 Lemma Qty_bid_delete1 (M: list transaction)(m:transaction)(i:nat):
 idb m <> i -> Qty_bid (delete m M) i = Qty_bid M i.
-Proof. revert m. induction M as [|a M IHM]. simpl. auto. simpl. intros m H. 
+Proof. revert m. induction M. simpl. auto. simpl. intros. 
 destruct(t_eqb m a ) eqn:Ha. destruct (idb a =? i) eqn:hi.
 move /eqP in hi. subst i. move /eqP in Ha. subst m.
  destruct H.  auto.
@@ -722,7 +715,7 @@ destruct (idb a =? i) eqn:hi. auto. apply IHM. auto. Qed.
 
 Lemma Qty_bid_delete2 (M: list transaction)(m:transaction):
 In m M -> tquantity m + Qty_bid (delete m M) (idb m) = Qty_bid M (idb m).
-Proof. revert m. induction M as [|a M IHM]. simpl. intros m H. inversion H.
+Proof. revert m. induction M. simpl. intros. inversion H.
 intros. simpl in H. destruct H. subst a. simpl. 
 destruct (t_eqb m m) eqn:Hm1. destruct (idb m =? idb m) eqn:Hm2.
 auto. move /eqP in Hm2. destruct Hm2. auto. simpl.
@@ -737,19 +730,19 @@ auto. simpl. destruct (idb a =? idb m) eqn:Ha1. lia. auto. Qed.
 
 Lemma perm_Qty_bid (M1 M2: list transaction)(i:nat):
 perm M1 M2 -> Qty_bid M1 i = Qty_bid M2 i.
-Proof. revert M2. induction M1 as [|a M1 IHM1]. simpl. intros M2 H. 
+Proof. revert M2. induction M1. simpl. intros. 
 assert(M2=nil). eauto. subst. simpl. auto.
-intros M2 H. simpl. destruct(idb a =? i) eqn:Hi. move /eqP in Hi.
-subst. assert(H0:perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H as [H H0]. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+intros. simpl. destruct(idb a =? i) eqn:Hi. move /eqP in Hi.
+subst. assert(perm M1 (delete a M2)). unfold perm in H. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. apply Qty_bid_delete2.
-unfold perm in H. move /andP in H. destruct H as [H H1]. eauto.
-assert(H0:perm M1 (delete a M2)). unfold perm in H. 
-move /andP in H. destruct H as [H H0]. apply included_elim3a with (a0:=a) in H.
-simpl in H. apply included_elim3a with (a0:=a) in H0. 
+unfold perm in H. move /andP in H. destruct H. eauto.
+assert(perm M1 (delete a M2)). unfold perm in H. 
+move /andP in H. destruct H. apply included_elim3a with (a:=a) in H.
+simpl in H. apply included_elim3a with (a:=a) in H0. 
 simpl in H0. destruct (t_eqb a a) eqn: Ha. unfold perm. 
 apply /andP. auto. move /eqP in Ha. destruct Ha. auto.
 apply IHM1 in H0. rewrite H0. move /eqP in Hi.
@@ -759,14 +752,12 @@ Lemma Qty_bid_M1_M2 (M1 M2: list transaction)(w:order)(i j:nat):
 (forall t : transaction, In t M1 -> ida t = id w) ->
 (forall t : transaction, In t M2 -> ida t = id w ) ->
 Qty M1 j (id w) = Qty M2 j (id w)-> Qty M1 j i= Qty M2 j i.
-Proof. intros H H0 H1. assert(H2:Qty M1 j i= Qty M2 j i\/Qty M1 j i > 
+Proof. intros. assert(Qty M1 j i= Qty M2 j i\/Qty M1 j i > 
        Qty M2 j i\/Qty M1 j i < Qty M2 j i). lia. destruct H2. auto. 
-       destruct H2. assert(H3:Qty M1 j i >0). lia. apply Qty_elim in H3.
-       destruct H3 as [x H3]. destruct H3 as [H3 H4]. 
-       destruct H4 as [H4 H5]. apply H in H3. subst. 
-       rewrite H3. auto. assert(H3:Qty M2 j i>0). lia. apply Qty_elim in H3.
-       destruct H3 as [x H3]. destruct H3 as [H3 H4]. 
-       destruct H4 as [H4 H5]. apply H0 in H3. subst. 
+       destruct H2. assert(Qty M1 j i >0). lia. apply Qty_elim in H3.
+       destruct H3. destruct H3. destruct H4. apply H in H3. subst. 
+       rewrite H3. auto. assert(Qty M2 j i>0). lia. apply Qty_elim in H3.
+       destruct H3. destruct H3. destruct H4. apply H0 in H3. subst. 
        rewrite H3. auto. Qed.
 
 Fixpoint Vol (T: list transaction):(nat):=
@@ -776,10 +767,10 @@ Fixpoint Vol (T: list transaction):(nat):=
   end.
 
 Lemma Q_vs_Qty_bid (T: list transaction) (i:nat): Vol T >= Qty_bid T i.
-Proof. induction T as [|a T IHT]. simpl. lia. simpl. destruct (idb a =? i). lia. lia. Qed.
+Proof. induction T. simpl. lia. simpl. destruct (idb a =? i). lia. lia. Qed.
 
 Lemma Q_vs_Qty_ask (T: list transaction) (i:nat): Vol T >= Qty_ask T i.
-Proof. induction T as [|a T IHT]. simpl. lia. simpl. destruct (ida a =? i). lia. lia. Qed.
+Proof. induction T. simpl. lia. simpl. destruct (ida a =? i). lia. lia. Qed.
 
 Fixpoint ids_bid_aux (T: list transaction):(list nat):=
   match T with  
@@ -789,19 +780,18 @@ end.
 
 Lemma ids_bid_intro0 (T: list transaction) (i:nat) :
 In i (ids_bid_aux T) -> Qty_bid T i>0.
-Proof. intros H. induction T as [|a T IHT]. 
-        simpl in H. inversion H. simpl. simpl in H. 
-       destruct H. subst i. assert (H:idb a =? idb a = true). apply /eqP. 
+Proof. intros. induction T. simpl in H. inversion H. simpl. simpl in H. 
+       destruct H. subst i. assert (idb a =? idb a = true). apply /eqP. 
        auto. destruct a. simpl in IHT. simpl in H. simpl. assert 
-       (H0:idb0 =? idb0 = true). apply /eqP. auto. rewrite H. move 
+       (idb0 =? idb0 = true). apply /eqP. auto. rewrite H. move 
        /ltP in tquantity_cond0. lia. apply IHT in H. destruct 
        (idb a =? i). lia. lia. Qed.
 
 Lemma ids_bid_aux_intro1 (T: list transaction) (i:nat) :
 In i (ids_bid_aux T) -> exists t, In t T/\(idb t = i).
-Proof. intros H. induction T as [|a T IHT]. simpl in H. inversion H.
+Proof. intros. induction T. simpl in H. inversion H.
 simpl. simpl in H. destruct H. exists a. split. auto. auto.
-apply IHT in H. destruct H as [x H]. destruct H as [H H0].
+apply IHT in H. destruct H. destruct H.
 exists x. split. auto. auto. Qed.
 
 Lemma Qty_bid_t_zero (T: list transaction) (i:nat) :

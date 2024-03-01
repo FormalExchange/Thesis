@@ -8,6 +8,8 @@ coqc Competitive.v
 
 coqc Matching.v
 
+coqc MatchingAlter.v
+
 coqc SortLists.v
 
 coqc Match.v

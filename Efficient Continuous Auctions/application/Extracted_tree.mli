@@ -10,6 +10,8 @@ module Nat :
   val ltb : int -> int -> bool
  end
 
+val lt_eq_lt_dec : int -> int -> bool option
+
 type color =
 | Red
 | Black
@@ -18,8 +20,6 @@ module Color :
  sig
   type t = color
  end
-
-val lt_eq_lt_dec : int -> int -> bool option
 
 type order = { id : int; otime : int; oquantity : int; oprice : int }
 
@@ -31,10 +31,6 @@ type command =
 | Del
 
 type instruction = { cmd : command; ord : order }
-
-val pr1 : ('a1 * 'a2) -> 'a1
-
-val pr2 : ('a1 * 'a2) -> 'a2
 
 module TB :
  sig

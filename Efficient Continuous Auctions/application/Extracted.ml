@@ -55,7 +55,7 @@ let rec le_lt_dec n m =
     (fun n0 ->
     (fun zero succ n -> if n=0 then zero () else succ (n-1))
       (fun _ -> false)
-      (fun m0 -> le_lt_dec n0 m0)
+      (fun n1 -> le_lt_dec n0 n1)
       m)
     n
 
@@ -280,27 +280,27 @@ let iterated p i k =
 let rec match_ask b a a0 =
   match b with
   | [] -> ([],(a0::a)),[]
-  | b0::b' ->
-    let n = sub a0.oprice b0.oprice in
+  | a1::l ->
+    let n = sub a0.oprice a1.oprice in
     ((fun zero succ n -> if n=0 then zero () else succ (n-1))
        (fun _ ->
-       match lt_eq_lt_dec b0.oquantity a0.oquantity with
+       match lt_eq_lt_dec a1.oquantity a0.oquantity with
        | Some s ->
          if s
          then let bAM =
-                match_ask b' a { id = a0.id; otime = a0.otime; oquantity =
-                  (sub a0.oquantity b0.oquantity); oprice = a0.oprice }
+                match_ask l a { id = a0.id; otime = a0.otime; oquantity =
+                  (sub a0.oquantity a1.oquantity); oprice = a0.oprice }
               in
-              ((blist bAM),(alist bAM)),({ idb = b0.id; ida = a0.id;
-              tquantity = b0.oquantity }::(mlist bAM))
-         else (b',a),({ idb = b0.id; ida = a0.id; tquantity =
+              ((blist bAM),(alist bAM)),({ idb = a1.id; ida = a0.id;
+              tquantity = a1.oquantity }::(mlist bAM))
+         else (l,a),({ idb = a1.id; ida = a0.id; tquantity =
                 a0.oquantity }::[])
        | None ->
-         (({ id = b0.id; otime = b0.otime; oquantity =
-           (sub b0.oquantity a0.oquantity); oprice =
-           b0.oprice }::b'),a),({ idb = b0.id; ida = a0.id; tquantity =
+         (({ id = a1.id; otime = a1.otime; oquantity =
+           (sub a1.oquantity a0.oquantity); oprice =
+           a1.oprice }::l),a),({ idb = a1.id; ida = a0.id; tquantity =
            a0.oquantity }::[]))
-       (fun _ -> ((b0::b'),(a0::a)),[])
+       (fun _ -> ((a1::l),(a0::a)),[])
        n)
 
 (** val match_bid :
@@ -310,7 +310,7 @@ let rec match_ask b a a0 =
 let rec match_bid b a b0 =
   match a with
   | [] -> ((b0::b),[]),[]
-  | a0::a' ->
+  | a0::l ->
     let n = sub a0.oprice b0.oprice in
     ((fun zero succ n -> if n=0 then zero () else succ (n-1))
        (fun _ ->
@@ -319,18 +319,18 @@ let rec match_bid b a b0 =
          if s
          then (b,({ id = a0.id; otime = a0.otime; oquantity =
                 (sub a0.oquantity b0.oquantity); oprice =
-                a0.oprice }::a')),({ idb = b0.id; ida = a0.id; tquantity =
+                a0.oprice }::l)),({ idb = b0.id; ida = a0.id; tquantity =
                 b0.oquantity }::[])
-         else (b,a'),({ idb = b0.id; ida = a0.id; tquantity =
+         else (b,l),({ idb = b0.id; ida = a0.id; tquantity =
                 b0.oquantity }::[])
        | None ->
          let bAM =
-           match_bid b a' { id = b0.id; otime = b0.otime; oquantity =
+           match_bid b l { id = b0.id; otime = b0.otime; oquantity =
              (sub b0.oquantity a0.oquantity); oprice = b0.oprice }
          in
          ((blist bAM),(alist bAM)),({ idb = b0.id; ida = a0.id; tquantity =
          a0.oquantity }::(mlist bAM)))
-       (fun _ -> ((b0::b),(a0::a')),[])
+       (fun _ -> ((b0::b),(a0::l)),[])
        n)
 
 (** val del_order :

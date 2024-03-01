@@ -41,7 +41,7 @@ perm l1 l2 -> List.In a l1 -> List.In a l2.
 Proof. intros. apply perm_elim2 in H.
 unfold "[=]" in H. destruct H. eauto. Qed. 
 
-Hint Immediate perm_In2 :ecda.
+#[export] Hint Immediate perm_In2 :ecda.
 
 (*
 Lemma len_make (t1: TB.tree):
@@ -60,7 +60,7 @@ Proof. intros. induction B. simpl in H. inversion H.
 apply TB.min_elt_spec1 in H. apply TB.treeify_spec in H.
 auto. Qed.
 
-Hint Immediate min_elt_in_list :ecda.
+#[export]Hint Immediate min_elt_in_list :ecda.
 
 
 Lemma In_elementsB (B:TB.t)(a:TB.elt):
@@ -108,7 +108,7 @@ Proof. induction B.
       auto. 
     } Qed.
 
-Hint Immediate In_elements_id In_elementsB In_elementsA :ecda.
+#[export] Hint Immediate In_elements_id In_elementsB In_elementsA :ecda.
 
 Lemma max_elt_in_listB (B:TB.t)(e:TB.elt):
 TB.max_elt B = Some e -> List.In e (TB.elements B).
@@ -137,7 +137,7 @@ rewrite <- HB. rewrite <- HB in H.
 rewrite T_id.elements_node. apply in_app_iff. right.
 simpl. right. exact H. Qed.
 
-Hint Immediate max_elt_in_list_id max_elt_in_listB max_elt_in_listA :ecda.
+#[export] Hint Immediate max_elt_in_list_id max_elt_in_listB max_elt_in_listA :ecda.
 
 Lemma max_elt_equal_list_maxB (B:TB.t)(e:TB.elt)(b:order)(B0:list order):
 TB.Ok B -> NoDup (timesof (b::B0)) -> perm (TB.elements B) (b :: B0) -> TB.max_elt B = Some e
@@ -179,7 +179,7 @@ apply perm_elim2 in H.
 unfold "[=]" in H. destruct H. assert(List.In b (TA.elements B)).
 eauto. auto with ecda. unfold reflexive. unfold Properties.acompetitive. intros. apply /orP. right. apply /andP. split. auto. auto. simpl.  auto. Qed.
 
-Hint Immediate max_elt_equal_list_minA max_elt_equal_list_maxB :ecda.
+#[export] Hint Immediate max_elt_equal_list_minA max_elt_equal_list_maxB :ecda.
 
 Lemma NoDupA_intro (l:list order)(a:order)(f:order -> order -> Prop):
 Equivalence f -> f a a  -> NoDupA f (a :: l) -> ~List.In a l.
@@ -350,8 +350,8 @@ Proof. split.
       lia. apply countP1a in H2. apply TA.elements_spec_tree in H2. auto.
 Qed.
 
-Hint Immediate count_IntreeA count_Intree_id count_IntreeB :ecda.
-Hint Immediate count_treeA count_tree_id count_treeB :ecda.
+#[export] Hint Immediate count_IntreeA count_Intree_id count_IntreeB :ecda.
+#[export] Hint Immediate count_treeA count_tree_id count_treeB :ecda.
 
 (*
 Lemma Intree_decB  s y :
@@ -390,7 +390,7 @@ perm (TB.elements B) (T_id.elements B_id) ->
 perm (TB.elements (TB.remove b B)) (T_id.elements (T_id.remove b B_id)).
 Proof. intros okB1 okB2 H0 H.
 assert(Hperm:=H). apply perm_intro. intros a. 
-apply perm_elim with (a0:=a) in H. 
+apply perm_elim with (a:=a) in H. 
 destruct (ord_eqb a b) eqn:Hab. 
 - move /eqP in Hab. subst. 
   destruct (count_tree_id (T_id.remove b B_id) b) as [H1 | H1];
@@ -449,7 +449,7 @@ perm (TA.elements A) (T_id.elements A_id) ->
 perm (TA.elements (TA.remove a A)) (T_id.elements (T_id.remove a A_id)).
 Proof. intros okA1 okA2 H0 H.
 assert(Hperm:=H). apply perm_intro. intros b. 
-apply perm_elim with (a0:=b) in H. 
+apply perm_elim with (a:=b) in H. 
 destruct (ord_eqb b a) eqn:Hab. 
 - move /eqP in Hab. subst. 
   destruct (count_tree_id (T_id.remove a A_id) a) as [H1 | H1];
@@ -507,7 +507,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
          assert(H1:List.In a (T_id.elements A)\/~List.In a (T_id.elements A)).
          eauto. destruct H1 as [H1 | H1].
       { assert(Hperm:=H0). 
-         apply perm_elim with (a0:=a) in H0. 
+         apply perm_elim with (a:=a) in H0. 
          destruct (ord_eqb b a) eqn:Hab. 
          { move /eqP in Hab. subst. apply T_id.elements_spec_tree in H. 
            apply count_Intree_id in H;auto. 
@@ -543,7 +543,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
         }
     }
     { assert(Hperm:=H0). 
-       apply perm_elim with (a0:=a) in H0. assert(Hpermc:=H0).
+       apply perm_elim with (a:=a) in H0. assert(Hpermc:=H0).
        apply countP2 in H1.
        rewrite H1 in H0.  symmetry in H0.
        destruct (ord_eqb b a) eqn:Hab.
@@ -575,7 +575,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
          assert(H1:List.In a (TB.elements B)\/~List.In a (TB.elements B)).
          eauto. destruct H1 as [H1 | H1].
       { assert(Hperm:=H0). 
-         apply perm_elim with (a0:=a) in H0. 
+         apply perm_elim with (a:=a) in H0. 
          destruct (ord_eqb b a) eqn:Hab. 
          { move /eqP in Hab. subst. apply TB.elements_spec_tree in H. 
            apply count_IntreeB in H;auto. 
@@ -606,7 +606,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
         }
     }
     { assert(Hperm:=H0). 
-       apply perm_elim with (a0:=a) in H0. assert(Hpermc:=H0).
+       apply perm_elim with (a:=a) in H0. assert(Hpermc:=H0).
        apply countP2 in H1.
        rewrite H1 in H0.  symmetry in H0.
        destruct (ord_eqb b a) eqn:Hab.
@@ -627,7 +627,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
          assert(H1:List.In a (TA.elements A)\/~List.In a (TA.elements A)).
          eauto. destruct H1 as [H1 | H1].
       { assert(Hperm:=H0). 
-         apply perm_elim with (a0:=a) in H0. 
+         apply perm_elim with (a:=a) in H0. 
          destruct (ord_eqb b a) eqn:Hab. 
          { move /eqP in Hab. subst. apply TA.elements_spec_tree in H. 
            apply count_IntreeA in H;auto. 
@@ -658,7 +658,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
         }
     }
     { assert(Hperm:=H0). 
-       apply perm_elim with (a0:=a) in H0. assert(Hpermc:=H0).
+       apply perm_elim with (a:=a) in H0. assert(Hpermc:=H0).
        apply countP2 in H1.
        rewrite H1 in H0.  symmetry in H0.
        destruct (ord_eqb b a) eqn:Hab.
@@ -679,7 +679,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
          assert(H1:List.In a (T_id.elements A)\/~List.In a (T_id.elements A)).
          eauto. destruct H1 as [H1 | H1].
       { assert(Hperm:=H0). 
-         apply perm_elim with (a0:=a) in H0. 
+         apply perm_elim with (a:=a) in H0. 
          destruct (ord_eqb b a) eqn:Hab. 
          { move /eqP in Hab. subst. apply T_id.elements_spec_tree in H. 
            apply count_Intree_id in H;auto. 
@@ -710,7 +710,7 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
         }
     }
     { assert(Hperm:=H0). 
-       apply perm_elim with (a0:=a) in H0. assert(Hpermc:=H0).
+       apply perm_elim with (a:=a) in H0. assert(Hpermc:=H0).
        apply countP2 in H1.
        rewrite H1 in H0.  symmetry in H0.
        destruct (ord_eqb b a) eqn:Hab.
@@ -725,9 +725,9 @@ Proof. intros ok1 H H0. apply perm_intro. intros.
 } }
 Qed.
 
-Hint Immediate perm_remove_tree_delete_id perm_remove_tree_deleteB
+#[export] Hint Immediate perm_remove_tree_delete_id perm_remove_tree_deleteB
  perm_remove_tree_deleteA :ecda.
-Hint Immediate perm_remove_treeB perm_remove_treeA :ecda.
+#[export] Hint Immediate perm_remove_treeB perm_remove_treeA :ecda.
 
 Lemma InT_time_InA (A:TA.t)(a:TA.elt):
 TA.InT a A -> List.In (otime a) (map (otime) (TA.elements A)). 
@@ -779,8 +779,8 @@ T_id.Intree a (T_id.add a A).
 Proof. intros ok1 H. apply T_id.add_spec_tree. auto. 
 intro. apply InT_id_In_id in H0. replace (ids) with (map id) in H. destruct (H H0). auto. auto. Qed.
 
-Hint Immediate add_element_InB add_element_InA add_element_In_id :ecda.
-Hint Immediate InT_time_InB InT_time_InA InT_id_In_id :ecda.
+#[export] Hint Immediate add_element_InB add_element_InA add_element_In_id :ecda.
+#[export] Hint Immediate InT_time_InB InT_time_InA InT_id_In_id :ecda.
 
 Lemma perm_add_list_headB (B:TB.t)(B0:list order)(a:TB.elt):
 TB.Ok B -> NoDup (timesof (a::B0)) ->
@@ -788,7 +788,7 @@ perm (TB.elements B) (B0) ->
 perm (TB.elements (TB.add a B)) (a :: B0).
 Proof. intros okB1 H0 H.
 assert(Hperm:=H). apply perm_intro. intros a0. 
-apply perm_elim with (a1:=a0) in H.
+apply perm_elim with (a:=a0) in H.
 simpl.  destruct (ord_eqb a0 a) eqn:Hab.
 { move /eqP in Hab. subst a0. 
   destruct (count_treeB (TB.add a B) a) as [H4 | H4].
@@ -826,7 +826,7 @@ perm (TA.elements A) (A0) ->
 perm (TA.elements (TA.add a A)) (a :: A0).
 Proof. intros okB1 H0 H.
 assert(Hperm:=H). apply perm_intro. intros a0. 
-apply perm_elim with (a1:=a0) in H.
+apply perm_elim with (a:=a0) in H.
 simpl.  destruct (ord_eqb a0 a) eqn:Hab.
 { move /eqP in Hab. subst a0. 
   destruct (count_treeA (TA.add a A) a) as [H4 | H4].
@@ -858,7 +858,7 @@ rewrite <- H.  assert(List.In a0 A0). apply countP1a.  lia.
 }
  Qed.
 
-Hint Immediate perm_add_list_headB perm_add_list_headA :ecda.
+#[export] Hint Immediate perm_add_list_headB perm_add_list_headA :ecda.
 
 Lemma perm_add_listB (B:TB.t)(B0:list order)(b a:TB.elt):
 TB.Ok B -> ~ List.In (otime b) (timesof B0) -> 
@@ -869,7 +869,7 @@ perm  (TB.elements   (TB.add  a (TB.remove b B)))  (a :: B0).
 Proof.
  intros H H0 H1 H2 H3. apply perm_intro. intros a0.
 assert(Hperm:=H3).
-apply perm_elim with (a1:=a0) in H3. 
+apply perm_elim with (a:=a0) in H3. 
 assert(H5:List.In b (TB.elements B)). 
 apply Subset_elim4 with (l1:=(b::B0)). auto. 
 apply included_elim5. unfold perm in Hperm. move /andP in Hperm.
@@ -938,7 +938,7 @@ perm  (TA.elements   (TA.add  a (TA.remove b A)))  (a :: A0).
 Proof.
  intros H H0 H1 H2 H3. apply perm_intro. intros a0.
 assert(Hperm:=H3).
-apply perm_elim with (a1:=a0) in H3. 
+apply perm_elim with (a:=a0) in H3. 
 assert(H5:List.In b (TA.elements A)). 
 apply Subset_elim4 with (l1:=(b::A0)). auto. 
 apply included_elim5. unfold perm in Hperm. move /andP in Hperm.
@@ -1006,7 +1006,7 @@ perm  (T_id.elements   (T_id.add  a (T_id.remove b B)))  (a :: B0).
 Proof.
  intros H H0 H1 H3. apply perm_intro. intros a0.
 assert(Hperm:=H3).
-apply perm_elim with (a1:=a0) in H3. 
+apply perm_elim with (a:=a0) in H3. 
 assert(H5:List.In b (T_id.elements B)). 
 apply Subset_elim4 with (l1:=(b::B0)). auto. 
 apply included_elim5. unfold perm in Hperm. move /andP in Hperm.
@@ -1063,7 +1063,7 @@ destruct (count_tree_id ((T_id.add a (T_id.remove b B))) a0) as [H4 | H4].
 Qed.
 
 
-Hint Immediate perm_add_list_id perm_add_listB perm_add_listA :ecda.
+#[export] Hint Immediate perm_add_list_id perm_add_listB perm_add_listA :ecda.
 
 Lemma perm_addA (A:TA.t)(A_id: T_id.t)(a:TA.elt):
 TA.Ok A -> T_id.Ok A_id ->~ List.In (otime a) (timesof (TA.elements A)) -> ~ List.In (id a) (ids (TA.elements A)) -> 
@@ -1161,7 +1161,7 @@ apply T_id.add_ok. auto.
    replace (map otime) with timesof in H4. destruct (H0 H4). auto.
 Qed.
 
-Hint Immediate perm_addB perm_addA :ecda.
+#[export] Hint Immediate perm_addB perm_addA :ecda.
 
 From Equations Require Import Equations.
 Equations EMatch_ask (B: TB.t)(A: TA.t)(a : TA.elt)(B_id A_id : T_id.t):
@@ -1415,7 +1415,7 @@ destruct (TA.max_elt A) eqn:Amax;destruct A0 as [|a A0'] eqn:HB0.
    destruct Amax with (a:=a). auto. eauto with ecda. }
 Qed.
 
-Hint Immediate efficient_correct_bid efficient_correct_ask : ecda.
+#[export] Hint Immediate efficient_correct_bid efficient_correct_ask : ecda.
 
 Lemma efficient_correct_askB (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA ->Sorted Properties.bcompetitive B ->
@@ -1518,7 +1518,7 @@ destruct (TA.max_elt A) eqn:Amax;destruct A0 as [|a A0'] eqn:HB0.
    destruct Amax with (a:=a). auto. eauto with ecda. }
  Qed.
 
-Hint Immediate efficient_correct_askB efficient_correct_bidB : ecda.
+#[export] Hint Immediate efficient_correct_askB efficient_correct_bidB : ecda.
 
 Lemma efficient_correct_askA (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA ->Sorted Properties.bcompetitive B ->
@@ -1621,7 +1621,7 @@ destruct (TA.max_elt A) eqn:Amax;destruct A0 as [|a A0'] eqn:HB0.
    destruct Amax with (a:=a). auto. eauto with ecda. }
  Qed.
 
-Hint Immediate efficient_correct_askA efficient_correct_bidA : ecda.
+#[export] Hint Immediate efficient_correct_askA efficient_correct_bidA : ecda.
 
 Lemma efficient_correct_askA_tree (tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA -> 
@@ -1709,7 +1709,7 @@ destruct (TA.max_elt A) eqn:Amax;destruct A0 as [|a A0'] eqn:HB0.
  Qed.
 
 
-Hint Immediate efficient_correct_askA_tree efficient_correct_bidA_id : ecda.
+#[export] Hint Immediate efficient_correct_askA_tree efficient_correct_bidA_id : ecda.
 
 Lemma efficient_correct_askB_id (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA ->Sorted Properties.bcompetitive B ->
@@ -1797,7 +1797,7 @@ destruct (TA.max_elt A) eqn:Bmax.
 { rewrite <- Heqcall. simpl. apply perm_addB. all:auto. }
 Qed.
 
-Hint Immediate efficient_correct_askB_id efficient_correct_bidB_tree : ecda.
+#[export] Hint Immediate efficient_correct_askB_id efficient_correct_bidB_tree : ecda.
 
 Lemma efficient_correct_askB_tree (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA ->Sorted Properties.bcompetitive B ->
@@ -1864,7 +1864,7 @@ Proof. intro ndi. intros.
   destruct H8. eauto.
 Qed.
 
-Hint Immediate efficient_correct_askB_id efficient_correct_askA_id: ecda.
+#[export] Hint Immediate efficient_correct_askB_id efficient_correct_askA_id: ecda.
 
 Lemma efficient_correct_askAtOk (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
 T_id.Ok tA_id -> T_id.Ok tB_id -> TB.Ok tB -> TA.Ok tA ->
@@ -1955,7 +1955,7 @@ destruct (TB.max_elt B) eqn:Bmax.
 { rewrite <- Heqcall. simpl. all:intuition. }
 Qed.
 
-Hint Immediate efficient_correct_askAtOk efficient_correct_askAidOk 
+#[export] Hint Immediate efficient_correct_askAtOk efficient_correct_askAidOk 
 efficient_correct_askBtOk efficient_correct_askBidOk :ecda.
 
 
@@ -2037,7 +2037,7 @@ destruct (TA.max_elt A) eqn:Bmax.
 Qed.
 
 
-Hint Immediate efficient_correct_bidAtOk efficient_correct_bidAidOk 
+#[export] Hint Immediate efficient_correct_bidAtOk efficient_correct_bidAidOk 
 efficient_correct_bidBtOk efficient_correct_bidBidOk :ecda.
 
 
@@ -2074,7 +2074,7 @@ destruct (search_order tA_id (id ord)) eqn:HA.
  - simpl. auto.
 Qed. 
 
-Hint Immediate efficient_correct_del efficient_correct_delA_tree :ecda.
+#[export] Hint Immediate efficient_correct_del efficient_correct_delA_tree :ecda.
 
 
 Lemma delete_order_nIn A e0:
@@ -2159,7 +2159,7 @@ assert(perm (TA.elements (At (EDel_order tB tA (id ord) tB_id tA_id)))
 apply efficient_correct_delA_tree with (A:=A)(B:=B). all:auto. Qed.
 
 
-Hint Immediate efficient_correct_delA efficient_correct_delA_id :ecda.
+#[export] Hint Immediate efficient_correct_delA efficient_correct_delA_id :ecda.
 
 
 Lemma efficient_correct_delB_tree (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
@@ -2242,7 +2242,7 @@ assert(perm (TB.elements (Bt (EDel_order tB tA (id ord) tB_id tA_id)))
 apply efficient_correct_delB_tree with (A:=A)(B:=B). all:auto. Qed.
 
 
-Hint Immediate efficient_correct_delB efficient_correct_delB_id
+#[export] Hint Immediate efficient_correct_delB efficient_correct_delB_id
 efficient_correct_delB_tree :ecda.
 
 Lemma efficient_correct_delBtOk (A B: list order)(tB: TB.t)(tA: TA.t)(ord:order)(tB_id tA_id : T_id.t):
@@ -2293,7 +2293,7 @@ destruct (search_order tB_id (id ord)) eqn:Hbe;
  - simpl. intuition.
 Qed.
 
-Hint Immediate efficient_correct_delBidOk efficient_correct_delAidOk
+#[export] Hint Immediate efficient_correct_delBidOk efficient_correct_delAidOk
 efficient_correct_delBtOk efficient_correct_delAtOk :ecda.
 
 

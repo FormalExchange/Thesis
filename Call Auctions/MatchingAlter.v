@@ -1,4 +1,6 @@
 Require Export Matching.
+Require Export Match.
+From Equations Require Export Equations.
 
 Section Transform.
 
@@ -368,7 +370,9 @@ destruct H9. rewrite increase_ab_quantity_equation_1. split.
   { destruct (Compare_dec.le_lt_dec (tquantity m1) 1) eqn:Hm1;
     destruct (Compare_dec.le_lt_dec (tquantity m2) 1) eqn:Hm2.
     { simpl. intros. destruct H11. subst t. simpl. { exists b. exists a. split. auto.
-      split. auto. split. auto. split. auto. split. auto. admit. } 
+      split. auto. split. auto. split. auto. split. auto. 
+apply H9 in H0. destruct H0. destruct H0. destruct H0. destruct H11. destruct H12. destruct H13. destruct H14.
+admit. } 
       destruct H11. subst t. simpl. apply H9 in H as Hm1a. apply H9 in H0 as Hm2b. admit.
       apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
     }
@@ -606,7 +610,7 @@ Vol M = Vol (remove_ab_transactions M nb na) + Qty M nb na.
 Proof. induction M. simpl. auto. simpl. destruct ((Nat.eqb (idb a) nb && Nat.eqb (ida a) na)).
 simpl. lia. simpl. lia. Qed.
 
-
+(*
 Equations reduced (A B: list order):list order:= 
 reduced A B := match (B, A) with
 |(_, nil) => nil
@@ -616,7 +620,8 @@ reduced A B := match (B, A) with
     |right _ => ((Mk_order (id a) (otime a) (oquantity a - oquantity b) (oprice a) _ ) :: A)
 end end.
 Next Obligation.
- apply PeanoNat.Nat.ltb_nlt. apply liaforrun;auto. Defined.
+ apply PeanoNat.Nat.ltb_nlt. apply liaforrun;auto. Defined. *)
+
 
 Lemma remove_ab_transactions_Qty_full_b M b a t:
 Qty_bid M (id b) <= Qty M (id b) (id a) ->
@@ -642,16 +647,132 @@ apply Qty_le_Qty_ask. assert(tquantity m > 0). destruct m. simpl.
 assert(Ht:=tquantity_cond). move /ltP in Ht. lia. lia. }
 { simpl. intros. destruct H0. subst. move /eqP in Ha. auto. apply IHM. all:auto. } Qed.
 
+
+(*Lemma remove_ab_transactions_tradeb M B0 A0 b a t:
+Matching M (b :: B0) (a :: A0) ->
+oquantity a < oquantity b ->
+In t (remove_ab_transactions M (id b) (id a)) -> 
+idb t = id b ->
+tquantity t <= oquantity b - Qty M (id b) (id a).
+Proof. revert A0 A0 b a t. induction M as [|m M]. firstorder. simpl.
+intros. destruct (Nat.eqb (idb m) (id b)) eqn:Hb;destruct (Nat.eqb (ida m) (id a)) eqn:Ha.
+{ simpl. simpl in H1. 
+
+ assert(In m (m::M)). auto. apply H in H4.
+unfold valid in H4. destruct H4. destruct H4.
+intros. assert(Qty_bid M (id b) >= Qty M (id b) (id a)). admit. 
+apply IHM in H0. assert(tquantity m <= oquantity b). admit.
+assert(tquantity m <= oquantity a). admit. 
+lia. auto. auto. }
+{ simpl. intros. destruct H0. move /eqP in Hb. move /eqP in Ha. subst t.
+assert(Qty M (id b) (id a) <= Qty_bid M (id b)).
+apply Qty_le_Qty_bid. assert(tquantity m > 0). destruct m. simpl. 
+assert(Ht:=tquantity_cond). move /ltP in Ht. lia. lia. }
+{ simpl. intros. destruct H0. subst. move /eqP in Hb. auto. apply IHM. all:auto. }
+{ simpl. intros. destruct H0. subst. move /eqP in Hb. auto. apply IHM. all:auto. } Qed.
+
+
+Lemma remove_ab_transactions_tradea M b a t:
+oquantity b < oquantity a ->
+In t (remove_ab_transactions M (id b) (id a)) -> tquantity t <= oquantity a - oquantity b.
+
+*)
+
+
+(*
+Lemma remove_ab_transactions_conservation_bid M b a bi: 
+Qty_bid M bi - Qty M (id b) (id a) <= Qty_bid (remove_ab_transactions M (id b) (id a)) bi.
+Proof. induction M as [|m M]. simpl. auto. simpl. 
+destruct (Nat.eqb (idb m) bi) eqn:Hb;destruct (Nat.eqb (idb m) (id b) && Nat.eqb (ida m) (id a)) eqn:Ha.
+{ simpl. lia. }
+{ simpl. rewrite Hb.  lia. }
+{ simpl. lia. }
+{ simpl. rewrite Hb. lia. } Qed.
+*)
+
+Lemma remove_ab_transactions_conservation_bid M b a: 
+Qty_bid M (id b) - Qty M (id b) (id a) = Qty_bid (remove_ab_transactions M (id b) (id a)) (id b).
+Proof. induction M as [|m M]. simpl. auto. simpl. 
+destruct (Nat.eqb (idb m) (id b) && Nat.eqb (ida m) (id a)) eqn:Ha.
+{ simpl. replace (Nat.eqb (idb m) (id b)) with true. lia. move /andP in Ha. destruct Ha. symmetry.  apply /eqP. 
+move /eqP in H. auto. }
+{ simpl. destruct (Nat.eqb (idb m) (id b)) eqn:Hb.
+    + assert( Qty M (id b) (id a) <= Qty_bid M (id b)). apply Qty_le_Qty_bid.
+      lia.
+    + auto.  
+} Qed.
+
+Lemma remove_ab_transactions_conservation_ask M b a: 
+Qty_ask M (id a) - Qty M (id b) (id a) = Qty_ask (remove_ab_transactions M (id b) (id a)) (id a).
+Proof. induction M as [|m M]. simpl. auto. simpl. 
+destruct (Nat.eqb (idb m) (id b) && Nat.eqb (ida m) (id a)) eqn:Ha.
+{ simpl. replace (Nat.eqb (ida m) (id a)) with true. lia. move /andP in Ha. destruct Ha. symmetry.  apply /eqP. 
+move /eqP in H0. auto. }
+{ simpl. destruct (Nat.eqb (ida m) (id a)) eqn:Hb.
+    + assert( Qty M (id b) (id a) <= Qty_ask M (id a)). apply Qty_le_Qty_ask.
+      lia.
+    + auto.  
+} Qed.
+
+
+
+
+
+Definition reduced (A0 B0: list order)(b a :order):(list order)*(list order).
+refine( match (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) with 
+        (*bq=ba*) 
+|inleft (right _) => (B0, A0)
+(*bq>ba*)
+
+ |inright _ => (B0, ((Mk_order (id a) (otime a) (oquantity a - oquantity b) (oprice a) (Match.Match_obligations_obligation_4 b a _) )::A0))
+ 
+(*bq < ba*)
+ |inleft (left _) => (((Mk_order (id b) (otime b) (oquantity b - oquantity a) (oprice b) (Match.Match_obligations_obligation_1 b a _) )::B0), A0) end ).
+auto. auto. Defined.
+
 Lemma remove_ab_transactions_main M B0 A0 b a:
 uniform (tprices M) ->
 Matching M (b :: B0) (a :: A0) ->
-Qty M (id b) (id a) = Nat.min (oquantity b) (oquantity a) ->
-exists OPT, (Is_uniform OPT (reduced (b::B0) (a::A0)) (reduced (a::A0) (b::B0)))/\
+Qty M (id b) (id a) = (Nat.min (oquantity b) (oquantity a)) ->
+exists OPT, (Is_uniform OPT (fst (reduced A0 B0 b a)) (snd (reduced A0 B0 b a)))/\
         (Vol(M) = Vol(OPT) + Nat.min (oquantity b) (oquantity a)).
-Proof. intros. exists (remove_ab_transactions M (id b) (id a)). 
-rewrite reduced_equation_1. rewrite reduced_equation_1.
-destruct (Compare_dec.le_lt_dec (oquantity a) (oquantity b)) eqn:Hab;
-destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba.
+Proof. 
+intros. exists (remove_ab_transactions M (id b) (id a)).
+unfold reduced.
+destruct (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b) ) eqn:Hab.
+{ destruct s eqn:Hs.
+{ simpl. replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a). 
+  replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H1. split. split. 
+  apply remove_ab_transactions_Uniform. apply H. split. unfold Tvalid. intros. apply filter_In in H2 as H3M.
+  destruct H3M. unfold nbool in H4. destruct (Nat.eqb (idb t) (id b) && Nat.eqb (ida t) (id a)) eqn:H6.
+  inversion H4. apply H0 in H3. unfold valid in H3. destruct H3 as [b0 H3]. destruct H3 as [a0 H5].
+  destruct H5. destruct H5. destruct H7. destruct H8. simpl in H3. simpl in H5. assert((ida t) <> (id a)).
+  apply remove_ab_transactions_Qty_full_a with (M:=M)(a:=a)(b:=b). assert(Qty_ask M (id a) <= oquantity a).
+  apply H0. auto. lia. auto. destruct H3. { subst. lia. }
+  { subst. destruct H5. {  subst b0. unfold valid. simpl. 
+    exists ({|
+     id := id b;
+     otime := otime b;
+     oquantity := oquantity b - oquantity a;
+     oprice := oprice b;
+     oquantity_cond := Match.Match_obligations_obligation_1 b a l
+   |}). simpl. exists a0. split. auto. split. auto.
+    split. auto. split. auto. split. unfold tradable. simpl. apply H9. split. 
+assert(Qty_bid M (id b) - Qty M (id b) (id a) = Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)).
+apply remove_ab_transactions_conservation_bid. assert(Qty_bid M (id b) <= oquantity b). apply H0. auto.
+assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b) <= oquantity b - Qty M (id b) (id a)).
+lia. rewrite H1 in H12. assert(tquantity t <= Qty_bid (remove_ab_transactions M (id b) (id a)) (id b) \/
+tquantity t > Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)). lia. destruct H13. lia.
+assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (idb t) >= tquantity t). apply Qty_bid1. auto.
+rewrite H7 in H14. lia. split. apply H9. apply H9. }
+    { exists b0. exists a0. auto. } } split. intros. simpl in H2. destruct H2. { subst b0. simpl. 
+      rewrite <-remove_ab_transactions_conservation_bid. rewrite H1. assert(Qty_bid M (id b) <= oquantity b).
+apply H0. auto. lia. }
+    { assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).  apply Qty_bid_filter.
+    cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H0. auto. }
+    intros. assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).
+    apply Qty_ask_filter. cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H0. auto. 
+    rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. } 
 { assert(oquantity a = oquantity b). lia. replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b). 
   replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H1. split. split. 
   apply remove_ab_transactions_Uniform. apply H. split. unfold Tvalid. intros. apply filter_In in H3 as H3M.
@@ -667,28 +788,8 @@ destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba.
   apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H0. auto. intros.
   assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).  apply Qty_ask_filter.
   cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H0. auto.
-  rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. 
-}
-{ replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a). 
-  replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H1. split. split. 
-  apply remove_ab_transactions_Uniform. apply H. split. unfold Tvalid. intros. apply filter_In in H2 as H3M.
-  destruct H3M. unfold nbool in H4. destruct (Nat.eqb (idb t) (id b) && Nat.eqb (ida t) (id a)) eqn:H6.
-  inversion H4. apply H0 in H3. unfold valid in H3. destruct H3 as [b0 H3]. destruct H3 as [a0 H5].
-  destruct H5. destruct H5. destruct H7. destruct H8. simpl in H3. simpl in H5. assert((ida t) <> (id a)).
-  apply remove_ab_transactions_Qty_full_a with (M:=M)(a:=a)(b:=b). assert(Qty_ask M (id a) <= oquantity a).
-  apply H0. auto. lia. auto. destruct H3. { subst. lia. }
-  { subst. destruct H5. {  subst b0. unfold valid. simpl. 
-    exists ({|id := id b;otime := otime b;oquantity := oquantity b - oquantity a;oprice := oprice b;
-    oquantity_cond := reduced_obligations_obligation_1 a b l0|}). simpl. exists a0. split. auto. split. auto.
-    split. auto. split. auto. split. unfold tradable. simpl. apply H9. split. admit. split. apply H9. apply H9. }
-    { exists b0. exists a0. auto. } } split. intros. simpl in H2. destruct H2. { subst b0. simpl. admit. }
-    { assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).  apply Qty_bid_filter.
-    cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H0. auto. }
-    intros. assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).
-    apply Qty_ask_filter. cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H0. auto. 
-    rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. 
-} 
-{ replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b). 
+  rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. } }
+  { replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b). 
   replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H1. split. split. 
   apply remove_ab_transactions_Uniform. apply H. split. unfold Tvalid. intros. apply filter_In in H2 as H3M.
   destruct H3M. unfold nbool in H4. destruct (Nat.eqb (idb t) (id b) && Nat.eqb (ida t) (id a)) eqn:H6.
@@ -697,20 +798,32 @@ destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba.
   apply remove_ab_transactions_Qty_full_b with (M:=M)(a:=a)(b:=b). assert(Qty_bid M (id b) <= oquantity b).
   apply H0. auto. lia. auto. destruct H5. { subst. lia. }
   { subst. destruct H3. {  subst a0. unfold valid. simpl. exists b0. 
-    exists ({|id := id a;otime := otime a;oquantity := oquantity a - oquantity b;oprice := oprice a;
-    oquantity_cond := reduced_obligations_obligation_1 b a l|}). simpl. split. auto. split. auto.
-    split. auto. split. auto. split. unfold tradable. simpl. apply H9. split. apply H9. split. admit.  apply H9. }
-    { exists b0. exists a0. auto. } } split. intros. 
+    exists ({|
+     id := id a;
+     otime := otime a;
+     oquantity := oquantity a - oquantity b;
+     oprice := oprice a;
+     oquantity_cond := Match.Match_obligations_obligation_4 b a l
+   |}). simpl. split. auto. split. auto.
+    split. auto. split. auto. split. unfold tradable. simpl. apply H9. split. apply H9. split. 
+assert(Qty_ask M (id a) - Qty M (id b) (id a) = Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)).
+apply remove_ab_transactions_conservation_ask. assert(Qty_ask M (id a) <= oquantity a). apply H0. auto.
+assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a) <= oquantity a - Qty M (id b) (id a)).
+lia. rewrite H1 in H12. assert(tquantity t <= Qty_ask (remove_ab_transactions M (id b) (id a)) (id a) \/
+tquantity t > Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)). lia. destruct H13. lia.
+assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (ida t) >= tquantity t). apply Qty_ask1. auto.
+rewrite H8 in H14. lia. split. apply H9. apply H9. }
+    { simpl. unfold valid. exists b0. exists a0. auto. } } split. intros. 
       assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).
     apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H0. auto.
-    intros. simpl in H2. destruct H2. { subst a0. simpl. admit. }
-    { assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).  apply Qty_ask_filter.
+    intros. simpl in H2. destruct H2. { subst a0. simpl. rewrite <-remove_ab_transactions_conservation_ask. 
+    rewrite H1. assert(Qty_ask M (id a) <= oquantity a). apply H0. auto. lia. }    { assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).  apply Qty_ask_filter.
     cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H0. auto. } 
-    rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. 
-}  
-{lia. } Admitted.
+    rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. }
+Qed.
 
-Lemma remove_ab_transactions_main1 M B0 A0 b a:
+
+Lemma remove_ab_transactions_main_equal M B0 A0 b a:
 uniform (tprices M) ->
 Matching M (b :: B0) (a :: A0) ->
 (oquantity b) = (oquantity a) ->
@@ -718,12 +831,12 @@ Qty M (id b) (id a) = (oquantity a) ->
 exists OPT, (Is_uniform OPT B0 A0)/\
         (Vol(M) = Vol(OPT) + (oquantity a)).
 Proof. intros. apply remove_ab_transactions_main in H0. destruct H0 as [M0 H0].
-rewrite reduced_equation_1 in H0. rewrite reduced_equation_1 in H0. 
-destruct (Compare_dec.le_lt_dec (oquantity b) (oquantity a)) eqn:Hba;
-destruct (Compare_dec.le_lt_dec (oquantity a) (oquantity b)) eqn:Hab.
-{ exists M0. split. apply H0. replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H0. 
-  apply H0. lia. }
-{ lia. } { lia. } {lia. } auto. lia. Qed.
+unfold reduced in H0.
+destruct (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:Hba. 
+destruct s. lia. simpl in H0.
+exists M0. split. apply H0. replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H0. 
+  apply H0. lia. lia. auto. lia. Qed.
+
 
 End Transform.
 

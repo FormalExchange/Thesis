@@ -339,6 +339,7 @@ Proof.  unfold Properties.
             { subst B2'. subst A2'. simpl in c3a_1. auto. }
          }  Qed.
 
+
 Theorem global_unique_aux (P1 P2 :(list order)->(list order) -> instruction -> (list order)*(list order)*(list transaction))(I : list instruction)(k:nat):
 (Properties P1) -> (Properties P2) -> structured I ->
 (cform (Mlist (iterated P1 I k))) === (cform (Mlist (iterated P2 I k)))/\

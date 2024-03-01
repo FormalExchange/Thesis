@@ -1,6 +1,8 @@
 
 type __ = Obj.t
 
+val app : 'a1 list -> 'a1 list -> 'a1 list
+
 val add : int -> int -> int
 
 val sub : int -> int -> int
@@ -15,17 +17,23 @@ type reflect =
 | ReflectT
 | ReflectF
 
+module type TotalLeBool' =
+ sig
+  type t
+
+  val leb : t -> t -> bool
+ end
+
+module Nat :
+ sig
+  val eqb : int -> int -> bool
+ end
+
 val last : 'a1 list -> 'a1 -> 'a1
 
+val lt_eq_lt_dec : int -> int -> bool option
+
 val reflect_intro : bool -> reflect
-
-val pr1 : ('a1 * 'a2) -> 'a1
-
-val pr2 : ('a1 * 'a2) -> 'a2
-
-val putin : ('a1 -> 'a1 -> bool) -> 'a1 -> 'a1 list -> 'a1 list
-
-val sort : ('a1 -> 'a1 -> bool) -> 'a1 list -> 'a1 list
 
 module Decidable :
  sig
@@ -40,54 +48,87 @@ val nat_eqP : int -> int -> reflect
 
 val nat_eqType : Decidable.coq_type
 
-type bid = { bp : int; btime : int; bq : int; idb : int }
+type order = { id : int; otime : int; oquantity : int; oprice : int }
 
-val b_eqb : bid -> bid -> bool
+type transaction = { idb : int; ida : int; tprice : int; tquantity : int }
 
-type ask = { sp : int; stime : int; sq : int; ida : int }
+val qty_bid : transaction list -> int -> int
 
-val a_eqb : ask -> ask -> bool
+val qty_ask : transaction list -> int -> int
 
-type fill_type = { bid_of : bid; ask_of : ask; tq : int; tp : int }
+val bcompetitive : order -> order -> bool
 
-val b0 : bid
+val acompetitive : order -> order -> bool
 
-val a0 : ask
+module Sort :
+ functor (X:TotalLeBool') ->
+ sig
+  val merge : X.t list -> X.t list -> X.t list
 
-val m0 : fill_type
+  val merge_list_to_stack :
+    X.t list option list -> X.t list -> X.t list option list
 
-val ttqb : fill_type list -> bid -> int
+  val merge_stack : X.t list option list -> X.t list
 
-val ttqa : fill_type list -> ask -> int
+  val iter_merge : X.t list option list -> X.t list -> X.t list
 
-val by_dbp : bid -> bid -> bool
+  val sort : X.t list -> X.t list
 
-val m_dbp : fill_type -> fill_type -> bool
+  val flatten_stack : X.t list option list -> X.t list
+ end
 
-val fOB_aux : fill_type list -> bid list -> int -> fill_type list
+module SortB :
+ sig
+  type t = order
 
-val fOB : fill_type list -> bid list -> fill_type list
+  val leb : order -> order -> bool
+ end
 
-val by_sp : ask -> ask -> bool
+module Decr_Bid :
+ sig
+  val merge : order list -> order list -> order list
 
-val m_sp : fill_type -> fill_type -> bool
+  val merge_list_to_stack :
+    order list option list -> order list -> order list option list
 
-val fOA_aux : fill_type list -> ask list -> int -> fill_type list
+  val merge_stack : order list option list -> order list
 
-val fOA : fill_type list -> ask list -> fill_type list
+  val iter_merge : order list option list -> order list -> order list
 
-val fAIR : fill_type list -> bid list -> ask list -> fill_type list
+  val sort : order list -> order list
 
-val uM_aux : bid list -> ask list -> int -> int -> fill_type list
+  val flatten_stack : order list option list -> order list
+ end
 
-val replace_column : fill_type list -> int -> fill_type list
+module SortA :
+ sig
+  type t = order
 
-val uniform_price : bid list -> ask list -> int
+  val leb : order -> order -> bool
+ end
 
-val uM : bid list -> ask list -> fill_type list
+module Incr_Ask :
+ sig
+  val merge : order list -> order list -> order list
 
-val mM_aux : bid list -> ask list -> int -> int -> fill_type list
+  val merge_list_to_stack :
+    order list option list -> order list -> order list option list
 
-val by_dsp : ask -> ask -> bool
+  val merge_stack : order list option list -> order list
 
-val mM : bid list -> ask list -> fill_type list
+  val iter_merge : order list option list -> order list -> order list
+
+  val sort : order list -> order list
+
+  val flatten_stack : order list option list -> order list
+ end
+
+val match0 : order list -> order list -> transaction list
+
+val assign_Transaction_Price : int -> transaction list -> transaction list
+
+val t0 : transaction
+
+val last_Transaction_Price : transaction list -> int
+
+val uM : order list -> order list -> transaction list

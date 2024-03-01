@@ -1,6 +1,13 @@
 
 type __ = Obj.t
 
+(** val app : 'a1 list -> 'a1 list -> 'a1 list **)
+
+let rec app l m =
+  match l with
+  | [] -> m
+  | a :: l1 -> a :: (app l1 m)
+
 (** val add : int -> int -> int **)
 
 let rec add = ( + )
@@ -34,6 +41,32 @@ type reflect =
 | ReflectT
 | ReflectF
 
+module type TotalLeBool' =
+ sig
+  type t
+
+  val leb : t -> t -> bool
+ end
+
+module Nat =
+ struct
+  (** val eqb : int -> int -> bool **)
+
+  let rec eqb n m =
+    (fun zero succ n -> if n=0 then zero () else succ (n-1))
+      (fun _ ->
+      (fun zero succ n -> if n=0 then zero () else succ (n-1))
+        (fun _ -> true)
+        (fun _ -> false)
+        m)
+      (fun n' ->
+      (fun zero succ n -> if n=0 then zero () else succ (n-1))
+        (fun _ -> false)
+        (fun m' -> eqb n' m')
+        m)
+      n
+ end
+
 (** val last : 'a1 list -> 'a1 -> 'a1 **)
 
 let rec last l d =
@@ -43,33 +76,27 @@ let rec last l d =
                 | [] -> a
                 | _ :: _ -> last l0 d)
 
+(** val lt_eq_lt_dec : int -> int -> bool option **)
+
+let rec lt_eq_lt_dec n m =
+  (fun zero succ n -> if n=0 then zero () else succ (n-1))
+    (fun _ ->
+    (fun zero succ n -> if n=0 then zero () else succ (n-1))
+      (fun _ -> Some false)
+      (fun _ -> Some true)
+      m)
+    (fun n0 ->
+    (fun zero succ n -> if n=0 then zero () else succ (n-1))
+      (fun _ -> None)
+      (fun n1 -> lt_eq_lt_dec n0 n1)
+      m)
+    n
+
 (** val reflect_intro : bool -> reflect **)
 
 let reflect_intro = function
 | true -> ReflectT
 | false -> ReflectF
-
-(** val pr1 : ('a1 * 'a2) -> 'a1 **)
-
-let pr1 = function
-| pr3,_ -> pr3
-
-(** val pr2 : ('a1 * 'a2) -> 'a2 **)
-
-let pr2 = function
-| _,pr3 -> pr3
-
-(** val putin : ('a1 -> 'a1 -> bool) -> 'a1 -> 'a1 list -> 'a1 list **)
-
-let rec putin lr a l = match l with
-| [] -> a :: []
-| b :: l1 -> if lr a b then a :: l else b :: (putin lr a l1)
-
-(** val sort : ('a1 -> 'a1 -> bool) -> 'a1 list -> 'a1 list **)
-
-let rec sort lr = function
-| [] -> []
-| a :: l1 -> putin lr a (sort lr l1)
 
 module Decidable =
  struct
@@ -79,8 +106,8 @@ module Decidable =
 
   (** val eqb : coq_type -> coq_E -> coq_E -> bool **)
 
-  let eqb t =
-    t.eqb
+  let eqb t1 =
+    t1.eqb
  end
 
 (** val nat_eqP : int -> int -> reflect **)
@@ -93,244 +120,182 @@ let nat_eqP x y =
 let nat_eqType =
   { Decidable.eqb = (Obj.magic eqb); Decidable.eqP = (Obj.magic nat_eqP) }
 
-type bid = { bp : int; btime : int; bq : int; idb : int }
+type order = { id : int; otime : int; oquantity : int; oprice : int }
 
-(** val b_eqb : bid -> bid -> bool **)
+type transaction = { idb : int; ida : int; tprice : int; tquantity : int }
 
-let b_eqb x y =
-  (&&)
-    ((&&)
-      ((&&) (nat_eqType.Decidable.eqb (Obj.magic x.idb) (Obj.magic y.idb))
-        (nat_eqType.Decidable.eqb (Obj.magic x.btime) (Obj.magic y.btime)))
-      (nat_eqType.Decidable.eqb (Obj.magic x.bq) (Obj.magic y.bq)))
-    (nat_eqType.Decidable.eqb (Obj.magic x.bp) (Obj.magic y.bp))
+(** val qty_bid : transaction list -> int -> int **)
 
-type ask = { sp : int; stime : int; sq : int; ida : int }
-
-(** val a_eqb : ask -> ask -> bool **)
-
-let a_eqb x y =
-  (&&)
-    ((&&)
-      ((&&) (nat_eqType.Decidable.eqb (Obj.magic x.ida) (Obj.magic y.ida))
-        (nat_eqType.Decidable.eqb (Obj.magic x.stime) (Obj.magic y.stime)))
-      (nat_eqType.Decidable.eqb (Obj.magic x.sq) (Obj.magic y.sq)))
-    (nat_eqType.Decidable.eqb (Obj.magic x.sp) (Obj.magic y.sp))
-
-type fill_type = { bid_of : bid; ask_of : ask; tq : int; tp : int }
-
-(** val b0 : bid **)
-
-let b0 =
-  { bp = 0; btime = 0; bq = 0; idb = 0 }
-
-(** val a0 : ask **)
-
-let a0 =
-  { sp = 0; stime = 0; sq = 0; ida = 0 }
-
-(** val m0 : fill_type **)
-
-let m0 =
-  { bid_of = b0; ask_of = a0; tq = 0; tp = 0 }
-
-(** val ttqb : fill_type list -> bid -> int **)
-
-let rec ttqb f b =
-  match f with
+let rec qty_bid t1 i =
+  match t1 with
   | [] -> 0
-  | f0 :: f' -> if b_eqb b f0.bid_of then add f0.tq (ttqb f' b) else ttqb f' b
+  | t2 :: t' ->
+    if nat_eqType.Decidable.eqb (Obj.magic t2.idb) (Obj.magic i)
+    then add t2.tquantity (qty_bid t' i)
+    else qty_bid t' i
 
-(** val ttqa : fill_type list -> ask -> int **)
+(** val qty_ask : transaction list -> int -> int **)
 
-let rec ttqa f a =
-  match f with
+let rec qty_ask t1 i =
+  match t1 with
   | [] -> 0
-  | f0 :: f' -> if a_eqb a f0.ask_of then add f0.tq (ttqa f' a) else ttqa f' a
+  | t2 :: t' ->
+    if nat_eqType.Decidable.eqb (Obj.magic t2.ida) (Obj.magic i)
+    then add t2.tquantity (qty_ask t' i)
+    else qty_ask t' i
 
-(** val by_dbp : bid -> bid -> bool **)
+(** val bcompetitive : order -> order -> bool **)
 
-let by_dbp b1 b2 =
-  (||) (ltb b2.bp b1.bp) ((&&) (eqb b2.bp b1.bp) (leb b1.btime b2.btime))
+let bcompetitive b b' =
+  (||) (ltb b'.oprice b.oprice)
+    ((&&) (eqb b'.oprice b.oprice) (leb b.otime b'.otime))
 
-(** val m_dbp : fill_type -> fill_type -> bool **)
+(** val acompetitive : order -> order -> bool **)
 
-let m_dbp m1 m2 =
-  by_dbp m1.bid_of m2.bid_of
+let acompetitive a a' =
+  (||) (ltb a.oprice a'.oprice)
+    ((&&) (eqb a.oprice a'.oprice) (leb a.otime a'.otime))
 
-(** val fOB_aux : fill_type list -> bid list -> int -> fill_type list **)
+module Sort =
+ functor (X:TotalLeBool') ->
+ struct
+  (** val merge : X.t list -> X.t list -> X.t list **)
 
-let fOB_aux a a1 b =
-  let rec fix_F x =
-    let t = pr2 (pr2 x) in
-    (match pr1 x with
-     | [] -> []
-     | f :: l ->
-       (match pr1 (pr2 x) with
-        | [] -> []
-        | b1 :: l0 ->
-          if eqb f.tq (sub b1.bq t)
-          then { bid_of = b1; ask_of = f.ask_of; tq = (sub b1.bq t); tp =
-                 f.tp } :: (let y = l,(l0,0) in fix_F y)
-          else if leb f.tq (sub b1.bq t)
-               then { bid_of = b1; ask_of = f.ask_of; tq = f.tq; tp =
-                      f.tp } :: (let y = l,((b1 :: l0),(add t f.tq)) in
-                                 fix_F y)
-               else { bid_of = b1; ask_of = f.ask_of; tq = (sub b1.bq t);
-                      tp =
-                      f.tp } :: (let y = ({ bid_of = f.bid_of; ask_of =
-                                   f.ask_of; tq = (sub f.tq (sub b1.bq t));
-                                   tp = f.tp } :: l),(l0,0)
-                                 in
-                                 fix_F y)))
-  in fix_F (a,(a1,b))
+  let rec merge l1 l2 =
+    let rec merge_aux l3 =
+      match l1 with
+      | [] -> l3
+      | a1 :: l1' ->
+        (match l3 with
+         | [] -> l1
+         | a2 :: l2' ->
+           if X.leb a1 a2 then a1 :: (merge l1' l3) else a2 :: (merge_aux l2'))
+    in merge_aux l2
 
-(** val fOB : fill_type list -> bid list -> fill_type list **)
+  (** val merge_list_to_stack :
+      X.t list option list -> X.t list -> X.t list option list **)
 
-let fOB m b =
-  fOB_aux m b 0
+  let rec merge_list_to_stack stack l =
+    match stack with
+    | [] -> (Some l) :: []
+    | y :: stack' ->
+      (match y with
+       | Some l' -> None :: (merge_list_to_stack stack' (merge l' l))
+       | None -> (Some l) :: stack')
 
-(** val by_sp : ask -> ask -> bool **)
+  (** val merge_stack : X.t list option list -> X.t list **)
 
-let by_sp s1 s2 =
-  (||) (ltb s1.sp s2.sp) ((&&) (eqb s1.sp s2.sp) (leb s1.stime s2.stime))
-
-(** val m_sp : fill_type -> fill_type -> bool **)
-
-let m_sp m1 m2 =
-  by_sp m1.ask_of m2.ask_of
-
-(** val fOA_aux : fill_type list -> ask list -> int -> fill_type list **)
-
-let fOA_aux a a1 b =
-  let rec fix_F x =
-    let t = pr2 (pr2 x) in
-    (match pr1 x with
-     | [] -> []
-     | f :: l ->
-       (match pr1 (pr2 x) with
-        | [] -> []
-        | a2 :: l0 ->
-          if eqb f.tq (sub a2.sq t)
-          then { bid_of = f.bid_of; ask_of = a2; tq = (sub a2.sq t); tp =
-                 f.tp } :: (let y = l,(l0,0) in fix_F y)
-          else if leb f.tq (sub a2.sq t)
-               then { bid_of = f.bid_of; ask_of = a2; tq = f.tq; tp =
-                      f.tp } :: (let y = l,((a2 :: l0),(add t f.tq)) in
-                                 fix_F y)
-               else { bid_of = f.bid_of; ask_of = a2; tq = (sub a2.sq t);
-                      tp =
-                      f.tp } :: (let y = ({ bid_of = f.bid_of; ask_of =
-                                   f.ask_of; tq = (sub f.tq (sub a2.sq t));
-                                   tp = f.tp } :: l),(l0,0)
-                                 in
-                                 fix_F y)))
-  in fix_F (a,(a1,b))
-
-(** val fOA : fill_type list -> ask list -> fill_type list **)
-
-let fOA m a =
-  fOA_aux m a 0
-
-(** val fAIR : fill_type list -> bid list -> ask list -> fill_type list **)
-
-let fAIR m b a =
-  fOB (sort m_dbp (fOA (sort m_sp m) (sort by_sp a))) (sort by_dbp b)
-
-(** val uM_aux : bid list -> ask list -> int -> int -> fill_type list **)
-
-let uM_aux a a1 a2 b =
-  let rec fix_F x =
-    let tb = pr1 (pr2 (pr2 x)) in
-    let ta = pr2 (pr2 (pr2 x)) in
-    (match pr1 x with
-     | [] -> []
-     | b1 :: l ->
-       (match pr1 (pr2 x) with
-        | [] -> []
-        | a3 :: l0 ->
-          if leb a3.sp b1.bp
-          then if eqb (sub b1.bq tb) (sub a3.sq ta)
-               then { bid_of = b1; ask_of = a3; tq = (sub b1.bq tb); tp =
-                      b1.bp } :: (let y = l,(l0,(0,0)) in fix_F y)
-               else if leb (sub b1.bq tb) (sub a3.sq ta)
-                    then { bid_of = b1; ask_of = a3; tq = (sub b1.bq tb);
-                           tp =
-                           b1.bp } :: (let y =
-                                         l,((a3 :: l0),(0,(add ta
-                                                            (sub b1.bq tb))))
-                                       in
-                                       fix_F y)
-                    else { bid_of = b1; ask_of = a3; tq = (sub a3.sq ta);
-                           tp =
-                           b1.bp } :: (let y =
-                                         (b1 :: l),(l0,((add tb
-                                                          (sub a3.sq ta)),0))
-                                       in
-                                       fix_F y)
-          else []))
-  in fix_F (a,(a1,(a2,b)))
-
-(** val replace_column : fill_type list -> int -> fill_type list **)
-
-let rec replace_column l n =
-  match l with
+  let rec merge_stack = function
   | [] -> []
-  | m :: l' ->
-    { bid_of = m.bid_of; ask_of = m.ask_of; tq = m.tq; tp =
-      n } :: (replace_column l' n)
+  | y :: stack' ->
+    (match y with
+     | Some l -> merge l (merge_stack stack')
+     | None -> merge_stack stack')
 
-(** val uniform_price : bid list -> ask list -> int **)
+  (** val iter_merge : X.t list option list -> X.t list -> X.t list **)
 
-let uniform_price b a =
-  (last (uM_aux b a 0 0) m0).bid_of.bp
+  let rec iter_merge stack = function
+  | [] -> merge_stack stack
+  | a :: l' -> iter_merge (merge_list_to_stack stack (a :: [])) l'
 
-(** val uM : bid list -> ask list -> fill_type list **)
+  (** val sort : X.t list -> X.t list **)
+
+  let sort =
+    iter_merge []
+
+  (** val flatten_stack : X.t list option list -> X.t list **)
+
+  let rec flatten_stack = function
+  | [] -> []
+  | o :: stack' ->
+    (match o with
+     | Some l -> app l (flatten_stack stack')
+     | None -> flatten_stack stack')
+ end
+
+module SortB =
+ struct
+  type t = order
+
+  (** val leb : order -> order -> bool **)
+
+  let leb =
+    bcompetitive
+ end
+
+module Decr_Bid = Sort(SortB)
+
+module SortA =
+ struct
+  type t = order
+
+  (** val leb : order -> order -> bool **)
+
+  let leb =
+    acompetitive
+ end
+
+module Incr_Ask = Sort(SortA)
+
+(** val match0 : order list -> order list -> transaction list **)
+
+let match0 a b =
+  let rec fix_F x =
+    match let pr1,_ = x in pr1 with
+    | [] -> []
+    | o :: l ->
+      (match let _,pr2 = x in pr2 with
+       | [] -> []
+       | o0 :: l0 ->
+         if Nat.eqb (sub o0.oprice o.oprice) 0
+         then (match lt_eq_lt_dec o0.oquantity o.oquantity with
+               | Some s ->
+                 if s
+                 then { idb = o.id; ida = o0.id; tprice = o0.oprice;
+                        tquantity =
+                        o0.oquantity } :: (let y = ({ id = o.id; otime =
+                                             o.otime; oquantity =
+                                             (sub o.oquantity o0.oquantity);
+                                             oprice = o.oprice } :: l),l0
+                                           in
+                                           fix_F y)
+                 else { idb = o.id; ida = o0.id; tprice = o0.oprice;
+                        tquantity =
+                        o0.oquantity } :: (let y = l,l0 in fix_F y)
+               | None ->
+                 { idb = o.id; ida = o0.id; tprice = o0.oprice; tquantity =
+                   o.oquantity } :: (let y = l,({ id = o0.id; otime =
+                                       o0.otime; oquantity =
+                                       (sub o0.oquantity o.oquantity);
+                                       oprice = o0.oprice } :: l0)
+                                     in
+                                     fix_F y))
+         else let y = (o :: l),l0 in fix_F y)
+  in fix_F (a,b)
+
+(** val assign_Transaction_Price :
+    int -> transaction list -> transaction list **)
+
+let rec assign_Transaction_Price n = function
+| [] -> []
+| m :: l' ->
+  { idb = m.idb; ida = m.ida; tprice = n; tquantity =
+    m.tquantity } :: (assign_Transaction_Price n l')
+
+(** val t0 : transaction **)
+
+let t0 =
+  { idb = 0; ida = 0; tprice = 0; tquantity = ((fun x -> x + 1) 0) }
+
+(** val last_Transaction_Price : transaction list -> int **)
+
+let last_Transaction_Price m =
+  (last m t0).tprice
+
+(** val uM : order list -> order list -> transaction list **)
 
 let uM b a =
-  replace_column (uM_aux (sort by_dbp b) (sort by_sp a) 0 0)
-    (uniform_price (sort by_dbp b) (sort by_sp a))
-
-(** val mM_aux : bid list -> ask list -> int -> int -> fill_type list **)
-
-let mM_aux a a1 a2 b =
-  let rec fix_F x =
-    let tb = pr1 (pr2 (pr2 x)) in
-    let ta = pr2 (pr2 (pr2 x)) in
-    (match pr1 x with
-     | [] -> []
-     | b1 :: l ->
-       (match pr1 (pr2 x) with
-        | [] -> []
-        | a3 :: l0 ->
-          if leb a3.sp b1.bp
-          then if eqb (sub b1.bq tb) (sub a3.sq ta)
-               then { bid_of = b1; ask_of = a3; tq = (sub b1.bq tb); tp =
-                      b1.bp } :: (let y = l,(l0,(0,0)) in fix_F y)
-               else if leb (sub b1.bq tb) (sub a3.sq ta)
-                    then { bid_of = b1; ask_of = a3; tq = (sub b1.bq tb);
-                           tp =
-                           b1.bp } :: (let y =
-                                         l,((a3 :: l0),(0,(add ta
-                                                            (sub b1.bq tb))))
-                                       in
-                                       fix_F y)
-                    else { bid_of = b1; ask_of = a3; tq = (sub a3.sq ta);
-                           tp =
-                           b1.bp } :: (let y =
-                                         (b1 :: l),(l0,((add tb
-                                                          (sub a3.sq ta)),0))
-                                       in
-                                       fix_F y)
-          else let y = (b1 :: l),(l0,(tb,0)) in fix_F y))
-  in fix_F (a,(a1,(a2,b)))
-
-(** val by_dsp : ask -> ask -> bool **)
-
-let by_dsp s1 s2 =
-  (||) (ltb s2.sp s1.sp) ((&&) (eqb s2.sp s1.sp) (leb s2.stime s1.stime))
-
-(** val mM : bid list -> ask list -> fill_type list **)
-
-let mM b a =
-  mM_aux (sort by_dbp b) (sort by_dsp a) 0 0
+  let b0 = Decr_Bid.sort b in
+  let a0 = Incr_Ask.sort a in
+  let m = match0 b0 a0 in
+  let p = last_Transaction_Price m in assign_Transaction_Price p m
