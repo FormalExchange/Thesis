@@ -18,9 +18,9 @@ type the following command from your terminal:
 > ./auction.sh;
 > coqc Demo.v 
 
-1. The main lemmas for the correctness of fairness are in the file MQFAIR.v
-2. The UM process and its correctness theorems are in MQUM.v. The UM process is used at the exchanges.
-3. For MM process, go to the file MQMM.v.
+1. The main lemmas for the correctness of fairness are in the file FAIR.v
+2. The UM process and its correctness theorems are in UM.v. The UM process is used at the exchanges.
+3. For MM process, go to the file MM.v.
 4. The Bound.v file contains combinatorial results on matchings. 
 5. The Uniqueness.v file contains uniqueness related results.
 
