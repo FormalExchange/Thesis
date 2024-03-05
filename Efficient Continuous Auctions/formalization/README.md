@@ -1,5 +1,5 @@
 # Efficient and Verified Continuous Double Auctions
-This is the coq formalization accompanying our paper. 
+This is the coq formalization accompanying our thesis. 
 
 To compile our Coq code, you need to have a Coq compiler. We have tested our code using Coq version 8.17.1, and it compiles successfully without errors.
 
@@ -24,4 +24,4 @@ Our new formalization consists of three main files, which we briefly describe be
 
 3. Efficient.v : contains the statements and the proofs of the main results in our work. 
 
-The other Coq files are taken from the previous formalization, which is publically available on github.com/suneel-sarswat/cda.
+The other Coq files are taken Continuous Auction folder.
