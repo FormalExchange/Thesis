@@ -14,14 +14,14 @@ Finally, you can compile our Coq formalization using the following command in yo
 
     sh run.sh
     
-This command will compile our Coq formalization and also extract two programs in the `../application/' folder (corresponding to the earlier List implementation and our new Red-black tree implementation).
+This command will compile our Coq formalization and also extract two programs in the `../application/' folder (corresponding to the previous implementation using List and the new implementation using Red-black tree).
 
-Our new formalization consists of three main files, which we briefly describe below.
+This formalization consists of three main files, which we briefly describe below.
 
 1. RBT.v : contains definitions, properties, and lemmas for Red-black trees. This extends the Coq standard library as explained in our paper.
  
 2. OTypes.v : contains an instantiation of red-black trees to our application by setting the appropriate keys and types of elements of the tree.
 
-3. Efficient.v : contains the statements and the proofs of the main results in our work. 
+3. Efficient.v : contains the statements and the proofs of the main results in our work.
 
 The other Coq files are taken Continuous Auction folder.
