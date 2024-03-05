@@ -620,6 +620,91 @@ destruct (oprice a - oprice b =? 0) eqn:price.
 Lemma Match_priceA B A t:
 NoDup (ids (B)) -> Sorted bcompetitive B -> NoDup (ids A) -> Sorted acompetitive A -> 
 In t (Match B A) -> price A (ida t) <= tprice (last (Match B A) t0).
-Proof. Admitted.
+Proof. revert t. apply Match_elim. 
+- firstorder. 
+- firstorder.
+- simpl. intros b B0 a A0 H H0 H1 H2 t ndb SortB nda SortA. intros.
+assert(HbS: forall x, In x B0 -> (Nat.leb (oprice x) (oprice b))). apply Sorted_ointroB. auto.
+assert(HaS: forall x, In x A0 -> (Nat.leb (oprice a) (oprice x))). apply Sorted_ointroA. auto.
+destruct (oprice a - oprice b =? 0) eqn:price.
+{ destruct (lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:f1. 
+  { destruct s eqn:f2.
+    { specialize (H s). specialize (H l). simpl in H3. destruct H3.
+      { subst. match goal with |[ |- context[(_ <= tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id a =? id a) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l0) t0)) with (tprice (last (t :: l0) t0)). assert(In t (t::l0)). auto.
+        rewrite <- HM in H3. subst M0. apply H in H3 as H3a. 
+        cut((if id a =? ida m0 then oprice a else Definitions.price A0 (ida m0)) <= Definitions.price A0 (ida t)).
+        rewrite <- HM. lia. 
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+        rewrite H6. rewrite H6 in H3a. subst m0. simpl. replace (id a =? id a) with true.  rewrite price_elim1.
+        split. auto. eauto. move /eqP in price. apply HaS in H3 as H5b. move /leP in H5b. all:auto. eauto. 
+        eapply SortedreducedB. simpl. exact. simpl. auto. auto. eauto. apply Sorted_inv in SortA. apply SortA.
+      }
+      { apply H in H3 as Ht. replace (id a =? ida t) with false.
+        match goal with |[ |- context[(_ <= tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        assert((last (m0 :: M0) t0) = (last (M0) t0)). destruct M0 eqn:Hm. subst M0. rewrite Hm in H3. inversion H3. 
+        simpl. auto. rewrite H4. subst M0. auto. symmetry. apply /eqP. intro. apply ids_ask_intro1 in H3. 
+        unfold fun_ids_ask in H3. apply uniq_intro_elim in H3. assert(In (ida t) (ids A0)). apply Match_Subset_A in H3. auto.
+        rewrite <- H4 in H5. apply nodup_elim2 in nda. destruct (nda H5). all:auto.
+        eapply SortedreducedB. simpl. exact. simpl. auto. auto. eauto. apply Sorted_inv in SortA. apply SortA.
+      } }
+    { simpl in H3. destruct H3.
+      { subst.
+        match goal with |[ |- context[(_ <=  tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id a =? id a) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l) t0)) with (tprice (last (t :: l) t0)). assert(In t (t::l)). auto.
+        rewrite <- HM in H3. subst M0. apply H0 in H3 as H3a.  
+        cut((if id a =? ida m0 then oprice a else Definitions.price A0 (ida m0)) <= Definitions.price A0 (ida t)). 
+        rewrite <- HM. lia. simpl. replace (id a =? id a) with true. 
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+        rewrite H6. rewrite H6 in H3a. simpl in H4. rewrite price_elim1. split. auto. eauto. move /eqP in price. 
+        apply HaS in H3 as H5b. move /leP in H5b. all:auto. eauto. eauto. eauto. apply Sorted_inv in SortB.
+        apply SortB. eauto. apply Sorted_inv in SortA. apply SortA.
+      }
+      { apply H0 in H3 as Ht. replace (id a =? ida t) with false.
+        match goal with |[ |- context[(_ <=  tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        assert((last (m0 :: M0) t0) = (last (M0) t0)). destruct M0 eqn:Hm. subst M0. rewrite Hm in H3. inversion H3. 
+        simpl. auto. rewrite H4. subst M0. auto. symmetry. apply /eqP. intro. apply ids_ask_intro1 in H3. 
+        unfold fun_ids_ask in H3. apply uniq_intro_elim in H3. assert(In (ida t) (ids A0)). apply Match_Subset_A in H3. auto.
+        rewrite <- H4 in H5. apply nodup_elim2 in nda. destruct (nda H5). all:auto. eauto.
+        apply Sorted_inv in SortB. apply SortB. eauto. apply Sorted_inv in SortA. apply SortA.
+      } } }
+    { simpl in H3. destruct H3.
+      { subst. match goal with |[ |- context[(_ <= tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        destruct M0 eqn:HM. simpl. replace (id a =? id a) with true. move /eqP in price. lia. auto.
+        replace (tprice (last (m0 :: t :: l0) t0)) with (tprice (last (t :: l0) t0)). assert(In t (t::l0)). auto.
+        rewrite <- HM in H3. subst M0. apply H1 in H3 as H3a. 
+        cut((if id a =? ida m0 then oprice a else Definitions.price A0 (ida m0)) <= 
+        ((if id a =? ida t then oprice a else Definitions.price A0 (ida t)))). rewrite <- HM. lia. 
+        simpl. replace (id a =? id a) with true. 
+        apply Match_Tvalid in H3. unfold valid in H3. destruct H3 as [b0 H3]. 
+        destruct H3 as [a0 H3]. destruct H3. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8. 
+        rewrite H6. rewrite H6 in H3a. simpl in H3. destruct H3. 
+            + replace (id a =? id a0) with true. auto. subst a0. simpl. auto. 
+            + replace (id a =? id a0) with false. rewrite price_elim1. split. auto. eauto. move /eqP in price. 
+              apply HaS in H3 as H5b. move /leP in H5b. auto. symmetry. apply /eqP. intro. apply ids_intro in H3.
+              rewrite <- H10 in H3. apply nodup_elim2 in nda. firstorder. 
+            + eauto.
+            + simpl. auto.
+            + auto.
+            + eauto.
+            + apply Sorted_inv in SortB. apply SortB.
+            + auto.
+            + eapply SortedreducedA. simpl. exact. simpl. auto. auto.
+            + simpl. auto.
+      }
+      { apply H1 in H3 as Ht. 
+        match goal with |[ |- context[(_ <= tprice (last (?x::?y) t0))] ] => set(m0 := x);set(M0:=y) end.
+        replace (tprice (last (m0 :: M0) t0)) with (tprice (last (M0) t0)). subst M0. auto. destruct M0 eqn:HM. 
+        subst M0. rewrite HM in H3. inversion H3. simpl.  auto. eauto. apply Sorted_inv in SortB. apply SortB.
+        auto. eapply SortedreducedA. simpl. exact. simpl. auto. auto. } } } apply H2 in H3 as H3a. all:auto. 
+        replace (id a =? ida t) with false. auto. symmetry. apply /eqP. intro. apply ids_ask_intro1 in H3. 
+        unfold fun_ids_ask in H3. apply uniq_intro_elim in H3. assert(In (ida t) (ids A0)). apply Match_Subset_A in H3. auto.
+        rewrite <- H4 in H5. apply nodup_elim2 in nda. destruct (nda H5). all:auto.
+        eauto.  apply Sorted_inv in SortA. apply SortA. Qed.
+
 
 End Match.

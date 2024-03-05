@@ -6,7 +6,9 @@ Section Transform.
 
 (*########UM Surgery for Q(b,a,M')  = Q(b,a,M) + 1 matching ############*)
 
-(*This function g_increase_top takes two transactions ma and mb of M, where ask of ma is a and bid of mb is b. It reduces the trades quantity of ma and mb by 1 and inserts two transactions of single quantity between a <--> b and between partners if a and b. This is used in the proofs maximality for MM and UM. 
+(*This function g_increase_top takes two transactions ma and mb of M, where ask of ma is a and bid of mb is b.
+ It reduces the trades quantity of ma and mb by 1 and inserts two transactions of single quantity 
+between a <--> b and between partners if a and b. This is used in the proofs maximality for MM and UM. 
 Here we proves correctness properties of g_increase_top.*)
 
 Equations increase_ab_quantity (M:list transaction)(mb ma:transaction)(b:order)(a:order):(list transaction) :=  
@@ -353,7 +355,8 @@ Proof. unfold Uniform. intros. rewrite increase_ab_quantity_equation_1.
          apply uniform_elim4 with (l:=tprices M)(a1:=x)(a2:=tprice m1). all:auto.
        } Qed.
 
-Lemma increase_ab_quantity_Matching (M:list transaction)(m1 m2:transaction)(b:order)(a:order)(B A: list order):
+Lemma increase_ab_quantity_Is_uniform  (M:list transaction)(m1 m2:transaction)(b:order)(a:order)(B A: list order):
+NoDup (ids B) -> NoDup (ids A) ->
 In m1 M ->
 In m2 M ->
 In b B ->
@@ -364,41 +367,147 @@ m1<>m2 ->
 (id b) = (idb m1) ->
 (id a) <> ida m1 ->
 oprice b >= oprice a ->
-Matching M B A -> Matching (increase_ab_quantity M m1 m2 b a) B A.
-Proof. unfold Matching. unfold Tvalid. unfold valid. intros.
-destruct H9. rewrite increase_ab_quantity_equation_1. split. 
-  { destruct (Compare_dec.le_lt_dec (tquantity m1) 1) eqn:Hm1;
-    destruct (Compare_dec.le_lt_dec (tquantity m2) 1) eqn:Hm2.
-    { simpl. intros. destruct H11. subst t. simpl. { exists b. exists a. split. auto.
-      split. auto. split. auto. split. auto. split. auto. 
-apply H9 in H0. destruct H0. destruct H0. destruct H0. destruct H11. destruct H12. destruct H13. destruct H14.
-admit. } 
-      destruct H11. subst t. simpl. apply H9 in H as Hm1a. apply H9 in H0 as Hm2b. admit.
-      apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
-    }
-    {simpl. intros. destruct H11. subst t. simpl. exists b. exists a. admit. 
-      destruct H11. subst t. simpl. apply H9 in H as Hm1a. apply H9 in H0 as Hm2b. admit.
-      destruct H11. subst t. simpl.  apply H9 in H0 as Hm2b. admit.
-      apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
-    }
-    {simpl. intros. destruct H11. subst t. simpl. exists b. exists a. admit. 
-      destruct H11. subst t. simpl. apply H9 in H as Hm1a. apply H9 in H0 as Hm2b. admit.
-      destruct H11. subst t. simpl.  apply H9 in H as Hm1a. admit.
-      apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
-    }
-    {simpl. intros. destruct H11. subst t. simpl. exists b. exists a. admit. 
-      destruct H11. subst t. simpl. apply H9 in H as Hm1a. apply H9 in H0 as Hm2b. admit.
-      destruct H11. subst t. simpl.  apply H9 in H0 as Hm2b. admit.
-      destruct H11. subst t. simpl.  apply H9 in H as Hm1a. admit.
-      apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
-    }
-  } destruct H10. split. rewrite <- increase_ab_quantity_equation_1. intros. apply H10 in H12.
-    rewrite increase_ab_quantity_Qty_bid. all:auto. rewrite <- increase_ab_quantity_equation_1.
-    intros. apply H11 in H12. rewrite increase_ab_quantity_Qty_ask. all:auto. Admitted.
+Is_uniform M B A -> Is_uniform (increase_ab_quantity M m1 m2 b a) B A.
+Proof. unfold Is_uniform. unfold Matching. unfold Tvalid. unfold valid. unfold Uniform. intros ndb nda. intros.
+       destruct H9 as [Huni H9]. split. apply increase_ab_quantity_Uniform. all:auto. destruct H9.
+       rewrite increase_ab_quantity_equation_1. 
+       assert(Hm1q: tquantity m1 >0). destruct m1. simpl. assert(htemp:=tquantity_cond). move /ltP in htemp. lia.
+       assert(Hm2q: tquantity m2 >0). destruct m2. simpl. assert(htemp:=tquantity_cond). move /ltP in htemp. lia.
+       assert(Hbq: oquantity b >= 1). destruct b. simpl. assert(htemp:=oquantity_cond). move /ltP in htemp. lia.
+       assert(Haq: oquantity a >= 1). destruct a. simpl. assert(htemp:=oquantity_cond). move /ltP in htemp. lia.
+       assert(Hunip:tprice m1 = tprice m2). apply uniform_elim4 with (l:= tprices M). auto. apply in_map_iff. exists m1. 
+       auto. apply in_map_iff. exists m2. auto.
+       apply H9 in H as Hm1. destruct Hm1 as [b' Hm1]. destruct Hm1 as [a1 Hm1]. destruct Hm1 as [Hm1A Hm1].
+       destruct Hm1 as [Hm1B Hm1]. destruct Hm1 as [Hm1idb Hm1]. destruct Hm1 as [Hm1ida Hm1]. destruct Hm1 as [Hm1trad Hm1].
+       destruct Hm1 as [Hm1tqb Hm1]. destruct Hm1 as [Hm1tqa Hm1]. destruct Hm1 as [Hm1prb Hm1pra].
+       apply H9 in H0 as Hm2. destruct Hm2 as [b1 Hm2]. destruct Hm2 as [a' Hm2]. destruct Hm2 as [Hm2A Hm2].
+       destruct Hm2 as [Hm2B Hm2]. destruct Hm2 as [Hm2idb Hm2]. destruct Hm2 as [Hm2ida Hm2]. destruct Hm2 as [Hm2trad Hm2].
+       destruct Hm2 as [Hm2tqb Hm2]. destruct Hm2 as [Hm2tqa Hm2]. destruct Hm2 as [Hm2prb Hm2pra]. 
+       assert(Hb:b=b'). apply nodup_ids_uniq_order with (B:=B). auto. auto. auto. lia. subst b'.
+       assert(Ha:a=a'). apply nodup_ids_uniq_order with (B:=A). auto. auto. auto. lia. subst a'.
+       split. 
+       { destruct (Compare_dec.le_lt_dec (tquantity m1) 1) eqn:Hm1;
+         destruct (Compare_dec.le_lt_dec (tquantity m2) 1) eqn:Hm2.
+         { simpl. intros. destruct H11.
+           - subst t. simpl. exists b. exists a. split. auto. split. auto. split. auto. split. auto. split. auto.
+             apply H9 in H0. destruct H0. destruct H0. destruct H0. destruct H11. destruct H12. destruct H13. destruct H14.
+             split. lia. split. lia. split. lia. lia.
+           - destruct H11. subst t. simpl. exists b1. exists a1. split. auto. split. auto. split. auto. split. auto.
+             unfold tradable. lia. apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros. destruct H11. subst t. simpl.
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a1. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros.
+            destruct H11. subst t. simpl. 
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a1. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }  } 
+          destruct H10. split. rewrite <- increase_ab_quantity_equation_1. intros. apply H10 in H12.
+          rewrite increase_ab_quantity_Qty_bid. all:auto. rewrite <- increase_ab_quantity_equation_1.
+          intros. apply H11 in H12. rewrite increase_ab_quantity_Qty_ask. all:auto. Qed.
+
+Lemma increase_ab_quantity_Matching (M:list transaction)(m1 m2:transaction)(b:order)(a:order)(B A: list order):
+NoDup (ids (b::B)) -> NoDup (ids (a::A)) ->
+Sorted bcompetitive (b::B) ->
+Sorted rev_acompetitive (a::A) ->
+In m1 M ->
+In m2 M ->
+m1<>m2 ->
+(id a) = (ida m2) ->
+(id b) <> idb m2 ->
+(id b) = (idb m1) ->
+(id a) <> ida m1 ->
+oprice b >= oprice a ->
+Matching M (b::B) (a::A) -> Matching (increase_ab_quantity M m1 m2 b a) (b::B) (a::A).
+Proof. unfold Matching. unfold Tvalid. unfold valid. unfold Uniform. intros ndb nda sortB sortA. 
+       assert(H1:In b (b::B)). auto. assert(H2:In a (a::A)). auto. intros.
+       rewrite increase_ab_quantity_equation_1. 
+       assert(Hm1q: tquantity m1 >0). destruct m1. simpl. assert(htemp:=tquantity_cond). move /ltP in htemp. lia.
+       assert(Hm2q: tquantity m2 >0). destruct m2. simpl. assert(htemp:=tquantity_cond). move /ltP in htemp. lia.
+       assert(Hbq: oquantity b >= 1). destruct b. simpl. assert(htemp:=oquantity_cond). move /ltP in htemp. lia.
+       assert(Haq: oquantity a >= 1). destruct a. simpl. assert(htemp:=oquantity_cond). move /ltP in htemp. lia.
+       assert(HbS: forall x, In x (b::B) -> (Nat.leb (oprice x) (oprice b))). intros. simpl in H10. destruct H10.
+       subst x. auto. apply Sorted_ointroB with (B:=B). auto. auto.
+       assert(HaS: forall x, In x (a::A) -> (Nat.leb (oprice x) (oprice a))). intros. simpl in H10. destruct H10.
+       subst x. auto. apply Sorted_ointro_not_A with (A:=A)(a:=a). auto. auto.
+       apply H9 in H as Hm1. destruct Hm1 as [b' Hm1]. destruct Hm1 as [a1 Hm1]. destruct Hm1 as [Hm1A Hm1].
+       destruct Hm1 as [Hm1B Hm1]. destruct Hm1 as [Hm1idb Hm1]. destruct Hm1 as [Hm1ida Hm1]. destruct Hm1 as [Hm1trad Hm1].
+       destruct Hm1 as [Hm1tqb Hm1]. destruct Hm1 as [Hm1tqa Hm1]. destruct Hm1 as [Hm1prb Hm1pra].
+       apply H9 in H0 as Hm2. destruct Hm2 as [b1 Hm2]. destruct Hm2 as [a' Hm2]. destruct Hm2 as [Hm2A Hm2].
+       destruct Hm2 as [Hm2B Hm2]. destruct Hm2 as [Hm2idb Hm2]. destruct Hm2 as [Hm2ida Hm2]. destruct Hm2 as [Hm2trad Hm2].
+       destruct Hm2 as [Hm2tqb Hm2]. destruct Hm2 as [Hm2tqa Hm2]. destruct Hm2 as [Hm2prb Hm2pra]. 
+       assert(Hb:b=b'). apply nodup_ids_uniq_order with (B:=(b::B)). auto. auto. auto. lia. subst b'.
+       assert(Ha:a=a'). apply nodup_ids_uniq_order with (B:=(a::A)). auto. auto. auto. lia. subst a'. clear Hm2A Hm1B. 
+       apply HbS in Hm2B as Hm2Bp. move /leP in Hm2Bp. apply HaS in Hm1A as Hm1Ap. move /leP in Hm1Ap.
+       split. 
+       { intros. assert(H11:=H10). destruct (Compare_dec.le_lt_dec (tquantity m1) 1) eqn:Hm1;
+         destruct (Compare_dec.le_lt_dec (tquantity m2) 1) eqn:Hm2.
+         { simpl. intros. destruct H11. subst t. simpl. 
+             exists b. exists a. split. auto. split. auto. split. auto. split. auto. split. auto. lia.
+             destruct H11. subst t. simpl. 
+             exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+             apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros. destruct H11. subst t. simpl.
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a1. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }
+          { simpl. intros.
+            destruct H11. subst t. simpl. 
+            exists b. exists a. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a1. split. auto. split. auto. split. auto. split. auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b1. exists a. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            destruct H11. subst t. simpl. 
+            exists b. exists a1. split. auto. split. auto. split. auto. split.  auto. unfold tradable. lia. 
+            apply delete_elim1 in H11. apply delete_elim1 in H11. apply H9 in H11. auto.
+          }  } 
+          split. 
+          rewrite <- increase_ab_quantity_equation_1. intros. rewrite increase_ab_quantity_Qty_bid. all:auto.
+          apply H9. auto.
+          rewrite <- increase_ab_quantity_equation_1. intros. rewrite increase_ab_quantity_Qty_ask.
+          all:auto. apply H9. auto. Qed.
 
 
-Theorem increase_ab_quantity_Is_uniform (M:list transaction)(m1 m2:transaction)
+
+Theorem increase_ab_quantity_Is_uniform2 (M:list transaction)(m1 m2:transaction)
 (b:order)(a:order)(B:list order)(A:list order):
+NoDup (ids (b::B)) -> NoDup (ids (a::A)) -> 
 In m1 M ->
 In m2 M ->
 m1<>m2 ->
@@ -409,8 +518,8 @@ m1<>m2 ->
 oprice b >= oprice a ->
 Is_uniform M (b::B) (a::A) -> Is_uniform (increase_ab_quantity M m1 m2 b a) (b::B) (a::A).
 Proof. intros. split. 
-      { apply increase_ab_quantity_Uniform. all:auto. apply H7. } 
-      { apply increase_ab_quantity_Matching. all:auto. apply H7. } Qed.
+      { apply increase_ab_quantity_Uniform. all:auto. apply H9. } 
+      { apply increase_ab_quantity_Is_uniform. all:auto. } Qed.
 
 (*#######################End of surgery one#########################*) 
 
@@ -610,17 +719,6 @@ Vol M = Vol (remove_ab_transactions M nb na) + Qty M nb na.
 Proof. induction M. simpl. auto. simpl. destruct ((Nat.eqb (idb a) nb && Nat.eqb (ida a) na)).
 simpl. lia. simpl. lia. Qed.
 
-(*
-Equations reduced (A B: list order):list order:= 
-reduced A B := match (B, A) with
-|(_, nil) => nil
-|(nil, A) => A
-|(b::B, a::A) => match ((Compare_dec.le_lt_dec (oquantity a) (oquantity b))) with
-    |left _ => A
-    |right _ => ((Mk_order (id a) (otime a) (oquantity a - oquantity b) (oprice a) _ ) :: A)
-end end.
-Next Obligation.
- apply PeanoNat.Nat.ltb_nlt. apply liaforrun;auto. Defined. *)
 
 
 Lemma remove_ab_transactions_Qty_full_b M b a t:
@@ -647,48 +745,6 @@ apply Qty_le_Qty_ask. assert(tquantity m > 0). destruct m. simpl.
 assert(Ht:=tquantity_cond). move /ltP in Ht. lia. lia. }
 { simpl. intros. destruct H0. subst. move /eqP in Ha. auto. apply IHM. all:auto. } Qed.
 
-
-(*Lemma remove_ab_transactions_tradeb M B0 A0 b a t:
-Matching M (b :: B0) (a :: A0) ->
-oquantity a < oquantity b ->
-In t (remove_ab_transactions M (id b) (id a)) -> 
-idb t = id b ->
-tquantity t <= oquantity b - Qty M (id b) (id a).
-Proof. revert A0 A0 b a t. induction M as [|m M]. firstorder. simpl.
-intros. destruct (Nat.eqb (idb m) (id b)) eqn:Hb;destruct (Nat.eqb (ida m) (id a)) eqn:Ha.
-{ simpl. simpl in H1. 
-
- assert(In m (m::M)). auto. apply H in H4.
-unfold valid in H4. destruct H4. destruct H4.
-intros. assert(Qty_bid M (id b) >= Qty M (id b) (id a)). admit. 
-apply IHM in H0. assert(tquantity m <= oquantity b). admit.
-assert(tquantity m <= oquantity a). admit. 
-lia. auto. auto. }
-{ simpl. intros. destruct H0. move /eqP in Hb. move /eqP in Ha. subst t.
-assert(Qty M (id b) (id a) <= Qty_bid M (id b)).
-apply Qty_le_Qty_bid. assert(tquantity m > 0). destruct m. simpl. 
-assert(Ht:=tquantity_cond). move /ltP in Ht. lia. lia. }
-{ simpl. intros. destruct H0. subst. move /eqP in Hb. auto. apply IHM. all:auto. }
-{ simpl. intros. destruct H0. subst. move /eqP in Hb. auto. apply IHM. all:auto. } Qed.
-
-
-Lemma remove_ab_transactions_tradea M b a t:
-oquantity b < oquantity a ->
-In t (remove_ab_transactions M (id b) (id a)) -> tquantity t <= oquantity a - oquantity b.
-
-*)
-
-
-(*
-Lemma remove_ab_transactions_conservation_bid M b a bi: 
-Qty_bid M bi - Qty M (id b) (id a) <= Qty_bid (remove_ab_transactions M (id b) (id a)) bi.
-Proof. induction M as [|m M]. simpl. auto. simpl. 
-destruct (Nat.eqb (idb m) bi) eqn:Hb;destruct (Nat.eqb (idb m) (id b) && Nat.eqb (ida m) (id a)) eqn:Ha.
-{ simpl. lia. }
-{ simpl. rewrite Hb.  lia. }
-{ simpl. lia. }
-{ simpl. rewrite Hb. lia. } Qed.
-*)
 
 Lemma remove_ab_transactions_conservation_bid M b a: 
 Qty_bid M (id b) - Qty M (id b) (id a) = Qty_bid (remove_ab_transactions M (id b) (id a)) (id b).
@@ -717,19 +773,21 @@ move /eqP in H0. auto. }
 
 
 
-
 Definition reduced (A0 B0: list order)(b a :order):(list order)*(list order).
 refine( match (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) with 
         (*bq=ba*) 
 |inleft (right _) => (B0, A0)
 (*bq>ba*)
 
- |inright _ => (B0, ((Mk_order (id a) (otime a) (oquantity a - oquantity b) (oprice a) (Match.Match_obligations_obligation_4 b a _) )::A0))
+ |inright _ => (B0, ((Mk_order (id a) (otime a) (oquantity a - oquantity b) (oprice a) 
+(Match.Match_obligations_obligation_4 b a _) )::A0))
  
 (*bq < ba*)
- |inleft (left _) => (((Mk_order (id b) (otime b) (oquantity b - oquantity a) (oprice b) (Match.Match_obligations_obligation_1 b a _) )::B0), A0) end ).
+ |inleft (left _) => (((Mk_order (id b) (otime b) (oquantity b - oquantity a) (oprice b) 
+(Match.Match_obligations_obligation_1 b a _) )::B0), A0) 
+end ).
 auto. auto. Defined.
-
+(*TODO:Write similar lemma for non uniform case.*)
 Lemma remove_ab_transactions_main M B0 A0 b a:
 uniform (tprices M) ->
 Matching M (b :: B0) (a :: A0) ->
@@ -816,8 +874,11 @@ rewrite H8 in H14. lia. split. apply H9. apply H9. }
     { simpl. unfold valid. exists b0. exists a0. auto. } } split. intros. 
       assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).
     apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H0. auto.
-    intros. simpl in H2. destruct H2. { subst a0. simpl. rewrite <-remove_ab_transactions_conservation_ask. 
-    rewrite H1. assert(Qty_ask M (id a) <= oquantity a). apply H0. auto. lia. }    { assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).  apply Qty_ask_filter.
+    intros. simpl in H2. destruct H2. { subst a0. simpl. 
+rewrite <-remove_ab_transactions_conservation_ask. 
+    rewrite H1. assert(Qty_ask M (id a) <= oquantity a). apply H0. auto. lia. }    
+{ assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)). 
+ apply Qty_ask_filter.
     cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H0. auto. } 
     rewrite (remove_ab_transactions_Vol M (id b) (id a)). lia. lia. lia. }
 Qed.
@@ -838,1221 +899,150 @@ exists M0. split. apply H0. replace (Nat.min (oquantity b) (oquantity a)) with (
   apply H0. lia. lia. auto. lia. Qed.
 
 
-End Transform.
+Lemma remove_ab_transactions_matching M B0 A0 b a:
+admissible (b::B0) (a::A0) -> Matching M (b :: B0) (a :: A0) ->
+Qty M (id b) (id a) = (Nat.min (oquantity b) (oquantity a)) ->
+exists OPT, (Matching OPT (fst (reduced A0 B0 b a)) (snd (reduced A0 B0 b a)))/\
+        (Vol(M) = Vol(OPT) + Nat.min (oquantity b) (oquantity a)).
+Proof. intro adm. exists (remove_ab_transactions M (id b) (id a)). split. split.  intro. intros.
+        apply filter_In in H1 as H1f. 
+        destruct (Nat.eqb (idb t) (id b)) eqn:Hb;destruct (Nat.eqb (ida t) (id a)) eqn:Ha.
+        - simpl in H1f. destruct H1f. inversion H3.
+        - simpl in H1f. destruct H1f. unfold  reduced. destruct (Compare_dec.lt_eq_lt_dec (oquantity a)
+         (oquantity b)) eqn:Hq. 
+          { destruct s.
+            { simpl. unfold valid. exists ({|id := id b; otime := otime b;
+              oquantity := oquantity b - oquantity a; oprice := oprice b;
+              oquantity_cond := Match.Match_obligations_obligation_1 b a l|}). simpl.
+              apply H in H2. destruct H2 as [b0 H2]. destruct H2 as [a0 H2]. exists a0.
+              destruct H2. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8.
+              destruct H9. destruct H10. simpl in H2. destruct H2.
+              + subst a0. rewrite H6 in Ha. move /eqP in Ha. destruct Ha. auto.
+              + simpl in H4. destruct H4. 
+                * subst b0. split. auto. split. auto. split. auto. split. auto. split. auto. split.
+                  assert(Qty_bid M (id b) - Qty M (id b) (id a) = 
+                  Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)). 
+                  apply remove_ab_transactions_conservation_bid. rewrite H0 in H4.
+                  replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H4.
+                  assert(Qty_bid M (id b) <= oquantity b). apply H. auto. apply Qty_bid1 in H1.
+                  rewrite H5 in H1. lia. lia. split. auto. lia. 
+                * move /eqP in Hb. rewrite Hb in H5. apply ids_intro in H4. rewrite <- H5 in H4. 
+                  assert(~In (id b) (ids B0)). apply nodup_elim2. apply adm. destruct (H12 H4).
+            }
+            { simpl. assert(Qty_bid M (id b) - Qty M (id b) (id a) = 
+              Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)). 
+              apply remove_ab_transactions_conservation_bid. rewrite H0 in H4.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H4.
+              assert(Qty_bid M (id b) <= oquantity b). apply H. auto. apply Qty_bid1 in H1.
+              assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)= 0).
+              lia. assert(tquantity t = 0). move /eqP in Hb. rewrite Hb in H1. lia. 
+              destruct t. simpl in H7. assert(Hq0:=tquantity_cond). move /ltP in Hq0. lia. lia.
+            } }
+            { simpl. assert(Qty_bid M (id b) - Qty M (id b) (id a) = 
+              Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)). 
+              apply remove_ab_transactions_conservation_bid. rewrite H0 in H4.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H4.
+              assert(Qty_bid M (id b) <= oquantity b). apply H. auto. apply Qty_bid1 in H1.
+              assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)= 0).
+              lia. assert(tquantity t = 0). move /eqP in Hb. rewrite Hb in H1. lia. 
+              destruct t. simpl in H7. assert(Hq0:=tquantity_cond). move /ltP in Hq0. lia. lia.
+            } 
+        - simpl in H1f. destruct H1f. unfold  reduced. destruct (Compare_dec.lt_eq_lt_dec (oquantity a)
+         (oquantity b)) eqn:Hq. 
+          { destruct s.
+            { simpl. assert(Qty_ask M (id a) - Qty M (id b) (id a) = 
+              Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)). 
+              apply remove_ab_transactions_conservation_ask. rewrite H0 in H4.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H4.
+              assert(Qty_ask M (id a) <= oquantity a). apply H. auto. apply Qty_ask1 in H1.
+              assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)= 0).
+              lia. assert(tquantity t = 0). move /eqP in Ha. rewrite Ha in H1. lia. 
+              destruct t. simpl in H7. assert(Hq0:=tquantity_cond). move /ltP in Hq0. lia. lia.
+            }
+            { simpl. assert(Qty_ask M (id a) - Qty M (id b) (id a) = 
+              Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)). 
+              apply remove_ab_transactions_conservation_ask. rewrite H0 in H4.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H4.
+              assert(Qty_ask M (id a) <= oquantity a). apply H. auto. apply Qty_ask1 in H1.
+              assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)= 0).
+              lia. assert(tquantity t = 0). move /eqP in Ha. rewrite Ha in H1. lia. 
+              destruct t. simpl in H7. assert(Hq0:=tquantity_cond). move /ltP in Hq0. lia. lia.
+            } }
+            { simpl. unfold valid. simpl.
+              apply H in H2. destruct H2 as [b0 H2]. destruct H2 as [a0 H2]. exists b0.
+              exists ({|id := id a; otime := otime a;
+              oquantity := oquantity a - oquantity b; oprice := oprice a;
+              oquantity_cond := Match.Match_obligations_obligation_4 b a l|}). simpl.
+              destruct H2. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8.
+              destruct H9. destruct H10. simpl in H4. destruct H4.
+              + subst b0. rewrite H5 in Hb. move /eqP in Hb. destruct Hb. auto.
+              + simpl in H2. destruct H2. 
+                * subst a0. split. auto. split. auto. split. auto. split. auto. split. auto. split.
+                  auto. split.
+                  assert(Qty_ask M (id a) - Qty M (id b) (id a) = 
+                  Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)). 
+                  apply remove_ab_transactions_conservation_ask. rewrite H0 in H2.
+                  replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H2.
+                  assert(Qty_ask M (id a) <= oquantity a). apply H. auto. apply Qty_ask1 in H1.
+                  rewrite H6 in H1. lia. lia. split. auto. lia. 
+                * move /eqP in Ha. rewrite Ha in H6. apply ids_intro in H2. rewrite <- H6 in H2. 
+                  assert(~In (id a) (ids A0)). apply nodup_elim2. apply adm. destruct (H12 H2).
+            } 
+        - simpl in H1f. destruct H1f. apply H in H2. destruct H2 as [b0 H2]. destruct H2 as [a0 H2]. 
+          destruct H2. destruct H4. destruct H5. destruct H6. destruct H7. destruct H8.
+          destruct H9. destruct H10. simpl in H2. simpl in H4. destruct H2; destruct H4.
+          + subst. move /eqP in Ha. lia. 
+          + subst. move /eqP in Ha. lia.
+          + subst. move /eqP in Hb. lia.
+          + exists b0. exists a0. unfold reduced. 
+            destruct (Compare_dec.lt_eq_lt_dec (oquantity a) (oquantity b)) eqn:Hq. 
+            * destruct s.
+              ** simpl. split. auto. split. auto. split. auto. split. auto.
+                 split. auto. split. auto. split. auto. split. auto. auto.
+              ** simpl. split. auto. split. auto. split. auto. split. auto.
+                 split. auto. split. auto. split. auto. split. auto. auto.
+            * simpl. split. auto. split. auto. split. auto. split. auto.
+                 split. auto. split. auto. split. auto. split. auto. auto.
+   - split. 
+      * intros. unfold  reduced in H1. destruct (Compare_dec.lt_eq_lt_dec (oquantity a)
+         (oquantity b)) eqn:Hq. 
+          { destruct s. 
+           { simpl in H1. destruct H1. 
+            + subst b0. simpl.
+              assert(Qty_bid M (id b) - Qty M (id b) (id a) = 
+              Qty_bid (remove_ab_transactions M (id b) (id a)) (id b)). 
+              apply remove_ab_transactions_conservation_bid. rewrite H0 in H1.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity a) in H1.
+              assert(Qty_bid M (id b) <= oquantity b). apply H. auto. lia. lia. 
+           + assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).
+             apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H. auto.
+          }
+          { simpl in H1. assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).
+            apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H. auto.
+          } }
+          { simpl in H1. assert(Qty_bid (remove_ab_transactions M (id b) (id a)) (id b0) <= Qty_bid M (id b0)).
+            apply Qty_bid_filter. cut (Qty_bid M (id b0) <= oquantity b0). lia. apply H. auto.
+          }
+      * intros. unfold  reduced in H1. destruct (Compare_dec.lt_eq_lt_dec (oquantity a)
+         (oquantity b)) eqn:Hq. 
+          { destruct s. 
+           { simpl in H1. assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).
+             apply Qty_ask_filter. cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H. auto.
+           }
+           { simpl in H1. assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).
+             apply Qty_ask_filter. cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H. auto.
+           } }
+         { simpl in H1. destruct H1. 
+            + subst a0. simpl.
+              assert(Qty_ask M (id a) - Qty M (id b) (id a) = 
+              Qty_ask (remove_ab_transactions M (id b) (id a)) (id a)). 
+              apply remove_ab_transactions_conservation_ask. rewrite H0 in H1.
+              replace (Nat.min (oquantity b) (oquantity a)) with (oquantity b) in H1.
+              assert(Qty_ask M (id a) <= oquantity a). apply H. auto. lia. lia. 
+           + assert(Qty_ask (remove_ab_transactions M (id b) (id a)) (id a0) <= Qty_ask M (id a0)).
+             apply Qty_ask_filter. cut (Qty_ask M (id a0) <= oquantity a0). lia. apply H. auto.
+         } 
+       - rewrite <- H0. apply remove_ab_transactions_Vol. Qed.
 
-(*
-
-Lemma Remove_ab_trades_elim1 (M:list transaction)(b:order)(a:order)(m:transaction):
-In m (Remove_ab_trades M b a) -> In m M.
-Proof. induction M as [|m' M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m') && b_eqb b (bid_of m')) eqn:H.
-intros. right. apply IHM'. auto. simpl. intros.
-destruct H0. auto. auto. Qed.
-
-Lemma Remove_ab_trades_intro1 (M:list transaction)(b:order)(a:order)(m:transaction):
-~In m M -> ~In m (Remove_ab_trades M b a).
-Proof. induction M as [|m' M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m') && b_eqb b (bid_of m')) eqn:H.
-intros. apply IHM'. eauto. intros.
-simpl. intro. destruct H1. subst m. eauto.
-assert(~ In m (Remove_ab_trades M' b a)).
-apply IHM'. eauto. auto. Qed.
-
-
-Lemma Remove_ab_trades_correct1 (M:list transaction)(b:order)(a:order) :
-ttq_ab (Remove_ab_trades M b a) b a =0.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m) && b_eqb b (bid_of m)) eqn:H.
-apply IHM'. simpl. rewrite H. apply IHM'. Qed.
-
-Lemma Remove_ab_trades_correct2a (M:list transaction)(b:order)(a:order) :
-ttqa M a = ttq_ab M b a + ttqa (Remove_ab_trades M b a) a.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m) && b_eqb b (bid_of m)) eqn:Hab.
-{
-  destruct (a_eqb a (ask_of m)) eqn: Ha;destruct (b_eqb b (bid_of m)) eqn: Hb.
-  { rewrite IHM'. lia. } 
-  { simpl in Hab. auto. }
-  { simpl in Hab. auto. }
-  { simpl in Hab. auto. }
-}
-{
-  destruct (a_eqb a (ask_of m)) eqn: Ha;destruct (b_eqb b (bid_of m)) eqn: Hb.
-  { simpl in Hab. symmetry in Hab. auto. }
-  { simpl. rewrite Ha. rewrite IHM'.  lia. } 
-  {  simpl. rewrite Ha. rewrite IHM'.  lia. }
-  {  simpl. rewrite Ha. rewrite IHM'.  lia. }
-} Qed.
-
-Lemma Remove_ab_trades_correct2b (M:list transaction)(b:order)(a:order) :
-ttqb M b = ttq_ab M b a + ttqb (Remove_ab_trades M b a) b.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m) && b_eqb b (bid_of m)) eqn:Hab.
-{
-  destruct (a_eqb a (ask_of m)) eqn: Ha;destruct (b_eqb b (bid_of m)) eqn: Hb.
-  { rewrite IHM'. lia. } 
-  { simpl in Hab. auto. }
-  { simpl in Hab. auto. }
-  { simpl in Hab. auto. }
-}
-{
-  destruct (a_eqb a (ask_of m)) eqn: Ha;destruct (b_eqb b (bid_of m)) eqn: Hb.
-  { simpl in Hab. symmetry in Hab. auto. }
-  { simpl. rewrite Hb. rewrite IHM'.  lia. } 
-  {  simpl. rewrite Hb. rewrite IHM'.  lia. }
-  {  simpl. rewrite Hb. rewrite IHM'.  lia. }
-} Qed.
-
-Lemma Remove_ab_trades_NZT (M:list transaction)(b:order)(a:order) 
-(NZT: forall m : transaction, In m M -> tquantity m > 0):
-forall m : transaction, In m (Remove_ab_trades M b a) -> tquantity m > 0.
-Proof. intros. assert(In m M \/ ~In m M). eauto.
-destruct H0. apply NZT in H0. auto. 
-apply Remove_ab_trades_intro1 with (b:=b)(a:=a) in H0. 
-unfold not in H0. apply H0 in H. elim H. Qed.
-
-Lemma Remove_ab_trades_matchable (M:list transaction)(b:order)(a:order) :
-All_matchable M -> All_matchable (Remove_ab_trades M b a).
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m) && b_eqb b (bid_of m)) eqn:Hab.
-{
-  unfold All_matchable. simpl. intros H m' Hm'.
-  specialize (H m') as Hm1'. destruct Hm1'. right. 
-  eapply Remove_ab_trades_elim1. eauto.
-  unfold All_matchable in IHM'. eapply IHM' in Hm'.
-  auto. intros. apply H. right. auto. lia.
-} 
-{
-  unfold All_matchable. simpl. intros H m' Hm'. destruct Hm'.
-  apply H. auto. apply H. right. eapply Remove_ab_trades_elim1.
-  eauto.
-} Qed.
-
-Lemma Remove_ab_trades_ttq_le_a (M:list transaction)(b:order)(a a0:order):
-ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-{ destruct ((a_eqb a0 (ask_of m))) eqn: Ha0. 
-  {
-    destruct (a_eqb a a0) eqn:Haa0.
-    { move /eqP in Haa0. subst a0. 
-      assert(ttqa M' a = ttq_ab M' b a + ttqa (Remove_ab_trades M' b a) a).
-      eapply Remove_ab_trades_correct2a.
-      rewrite H. lia.
-    }
-    { move /eqP in Haa0. 
-      destruct(a_eqb a (ask_of m)) eqn: Hf.
-      move /eqP in Ha0.
-      move /eqP in Hf.
-      subst a. subst a0. elim Haa0. auto.
-      simpl in Hab. inversion Hab.
-     }
-   }
-   {
-   apply IHM'.
-   }
- }
- { destruct ((a_eqb a0 (ask_of m))) eqn: Ha0. 
-  {
-    simpl. rewrite Ha0. lia. 
-  }
-  { simpl. rewrite Ha0. lia.
-  }
- } Qed.
-
-
-Lemma Remove_ab_trades_ttq_le_b (M:list transaction)(b b0:order)(a:order):
-ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-{ destruct ((b_eqb b0 (bid_of m))) eqn: Hb0. 
-  {
-    destruct (b_eqb b b0) eqn:Hbb0.
-    { move /eqP in Hbb0. subst b0. 
-      assert(ttqb M' b = ttq_ab M' b a + ttqb (Remove_ab_trades M' b a) b).
-      eapply Remove_ab_trades_correct2b.
-      rewrite H. lia.
-    }
-    { move /eqP in Hbb0. 
-      destruct(b_eqb b (bid_of m)) eqn: Hf.
-      move /eqP in Hb0.
-      move /eqP in Hf.
-      subst b. subst b0. elim Hbb0. auto.
-      destruct (a_eqb a (ask_of m)).
-      simpl in Hab. inversion Hab.
-      simpl in Hab. inversion Hab.
-     }
-   }
-   {
-   apply IHM'.
-   }
- }
- { destruct ((b_eqb b0 (bid_of m))) eqn: Hb0. 
-  {
-    simpl. rewrite Hb0. lia. 
-  }
-  { simpl. rewrite Hb0. lia.
-  }
- } Qed.
-
-Lemma Remove_ab_trades_b_notIn (M:list transaction)(b:order)(a:order)
-(NZT: forall m : transaction, In m M -> tquantity m > 0):
-ttqb M b <= bq b -> ttq_ab M b a = bq b -> ~In b (bids_of (Remove_ab_trades M b a)).
-Proof. intros. assert(ttqb M b = ttq_ab M b a + ttqb (Remove_ab_trades M b a) b). apply Remove_ab_trades_correct2b.
-assert (ttqb (Remove_ab_trades M b a) b = 0). lia.
-apply ttqb_intro in H2. auto. 
-apply Remove_ab_trades_NZT. auto. Qed.
-
-Lemma Remove_ab_trades_a_notIn (M:list transaction)(b:order)(a:order)
-(NZT: forall m : transaction, In m M -> tquantity m > 0):
-ttqa M a <= sq a -> ttq_ab M b a = sq a -> ~In a (asks_of (Remove_ab_trades M b a)).
-Proof. intros. assert(ttqa M a = ttq_ab M b a + ttqa (Remove_ab_trades M b a) a). apply Remove_ab_trades_correct2a.
-assert (ttqa (Remove_ab_trades M b a) a = 0). lia.
-apply ttqa_intro in H2. auto. 
-apply Remove_ab_trades_NZT. auto. Qed.
-
-
-Lemma Remove_ab_trades_bids_subset (M:list transaction)(b:order)(a:order):
-bids_of (Remove_ab_trades M b a) [<=] bids_of M.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-eauto. simpl. eapply Subset_intro. auto. Qed.
-
-Lemma Remove_ab_trades_asks_subset (M:list transaction)(b:order)(a:order):
-asks_of (Remove_ab_trades M b a) [<=] asks_of M.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-eauto. simpl. eapply Subset_intro. auto. Qed.
-
-Lemma Remove_ab_trades_QM (M:list transaction)(b:order)(a:order):
-QM (M) = QM (Remove_ab_trades M b a) + ttq_ab M b a.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-simpl. lia. simpl. lia. Qed.
-
-Lemma Remove_ab_trades_IR (M:list transaction)(b:order)(a:order):
-Is_IR M-> Is_IR (Remove_ab_trades M b a).
-Proof. unfold Is_IR. intros. assert(In m M \/ ~In m M).
-eauto. destruct H1. auto. 
-apply Remove_ab_trades_intro1 with (b:=b)(a:=a) in H1.
-unfold not in H1. apply H1 in H0. elim H0.
-
-Qed.
-
-Lemma Remove_ab_trades_Uniform (M:list transaction)(b:order)(a:order):
-Uniform M-> Uniform (Remove_ab_trades M b a).
-Proof. induction M as [|m M'].
-simpl. auto. unfold Uniform. simpl. 
-intros. destruct ((a_eqb a (ask_of m)) && (b_eqb b (bid_of m))) eqn:Hab.
-simpl in H. apply IHM'. unfold Uniform. 
-apply uniform_elim2 with (a0:=tp m) in H. auto.
-simpl. unfold Uniform in IHM'.
-apply uniform_elim2 with (a0:=tp m) in H as H1.
-apply IHM' in H1 as H2. 
-cut((forall x, In x (trade_prices_of (Remove_ab_trades M' b a)) -> x=tp m)).
-eapply uniform_intro. intros.
-assert(In x (trade_prices_of M')).
-assert(exists m0, (In m0 (Remove_ab_trades M' b a) /\ (x = tp m0))).
-eauto.
-destruct H3 as [m0 H3]. destruct H3.
-assert(In m0 M').
-eapply Remove_ab_trades_elim1 with(b:=b)(a:=a). auto.
-subst x.
-eauto.
-assert(forall x, In x (trade_prices_of M') -> x=tp m).
-eapply uniform_elim. auto. apply H4 in H3. 
-auto.
-Qed.
-
-Lemma exists_M0_reduced_bid_ask_matching (M:list transaction) (B:list order)(A:list order)(b:order)(a:order)
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-matching_in (b::B) (a::A) M-> 
-ttq_ab M b a = (bq b) /\ ((sq a) = (bq b)) ->
-Is_IR M ->
-(exists M0, (matching_in B A M0) /\Is_IR M0/\(QM(M)=QM(M0) + (bq b))/\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros H H0 IR. exists (Remove_ab_trades M b a).
-split. 
-  { split.
-    split. 
-    { apply Remove_ab_trades_matchable. apply H. }
-      split.
-      { intros. 
-        assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0). 
-        eapply Remove_ab_trades_ttq_le_b with (b0:=b0).
-        assert(ttqb M b0 <= bq b0).  
-        assert(In b0 (bids_of M) \/~In b0 (bids_of M)).
-        eauto. destruct H3. 
-        apply H. auto. apply ttqb_elim in H3. lia. lia.
-      }
-      { intros. 
-        assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0). 
-        eapply Remove_ab_trades_ttq_le_a with (a0:=a0).
-        assert(ttqa M a0 <= sq a0).
-        assert(In a0 (asks_of M) \/~In a0 (asks_of M)).
-        eauto. destruct H3. 
-        apply H. auto. apply ttqa_elim in H3. lia. lia.
-      }
-      { split. 
-        { assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-          apply Remove_ab_trades_bids_subset.
-          assert(bids_of M [<=] (b::B)).
-          apply H.
-          assert(bids_of (Remove_ab_trades M b a) [<=] (b::B)).
-          eauto. 
-          assert(~In b (bids_of (Remove_ab_trades M b a))).
-          apply Remove_ab_trades_b_notIn.
-          auto. assert(In b (bids_of M) \/~In b (bids_of M)).
-          eauto. destruct H4. 
-          apply H. auto. apply ttqb_elim in H4. lia. 
-          apply H0. eauto.
-        }
-        { assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-          apply Remove_ab_trades_asks_subset.
-          assert(asks_of M [<=] (a::A)).
-          apply H.
-          assert(asks_of (Remove_ab_trades M b a) [<=] (a::A)).
-          eauto. 
-          assert(~In a (asks_of (Remove_ab_trades M b a))).
-          apply Remove_ab_trades_a_notIn.
-          auto. assert(In a (asks_of M) \/~In a (asks_of M)).
-          eauto. destruct H4. 
-          apply H. auto. apply ttqa_elim in H4. lia. 
-          destruct H0. lia. eauto.
-        }
-    }
-  }
-  { split.
-  apply Remove_ab_trades_IR. apply IR.
-  destruct H0. rewrite<- H0. split.
-  apply Remove_ab_trades_QM. 
-   apply Remove_ab_trades_NZT. auto.
- } Qed.
-
-
-
-
-Theorem exists_M0_reduced_bid_ask_uniform (M:list transaction) (B:list order)(A:list order)(b:order)(a:order)
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-Is_uniform M (b::B) (a::A) -> ttq_ab M b a = (bq b) /\ ((sq a) = (bq b)) ->
-(exists M0, (Is_uniform M0 B A) /\(QM(M)=QM(M0) + (bq b))/\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros. exists (Remove_ab_trades M b a).
-split. 
-{ split.
-  { apply Remove_ab_trades_Uniform. apply H. }
-  split. 
-  { split. 
-    { split. apply Remove_ab_trades_matchable. apply H.
-      split.
-      { intros. 
-        assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0). 
-        eapply Remove_ab_trades_ttq_le_b with (b0:=b0).
-        assert(ttqb M b0 <= bq b0).  assert(In b0 (bids_of M) \/~In b0 (bids_of M)).
-        eauto. destruct H3. 
-        apply H. auto. apply ttqb_elim in H3. lia. lia.
-      }
-      { intros. 
-        assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0). 
-        eapply Remove_ab_trades_ttq_le_a with (a0:=a0).
-        assert(ttqa M a0 <= sq a0).  assert(In a0 (asks_of M) \/~In a0 (asks_of M)).
-        eauto. destruct H3. 
-        apply H. auto. apply ttqa_elim in H3. lia. lia.
-      }
-    }
-    { split. 
-      { assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-        apply Remove_ab_trades_bids_subset.
-        assert(bids_of M [<=] (b::B)).
-        apply H.
-        assert(bids_of (Remove_ab_trades M b a) [<=] (b::B)).
-        eauto. 
-        assert(~In b (bids_of (Remove_ab_trades M b a))).
-        apply Remove_ab_trades_b_notIn.
-        auto. assert(In b (bids_of M) \/~In b (bids_of M)).
-        eauto. destruct H4. 
-        apply H. auto. apply ttqb_elim in H4. lia. 
-        apply H0. eauto.
-      }
-      { assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-        apply Remove_ab_trades_asks_subset.
-        assert(asks_of M [<=] (a::A)).
-        apply H.
-        assert(asks_of (Remove_ab_trades M b a) [<=] (a::A)).
-        eauto. 
-        assert(~In a (asks_of (Remove_ab_trades M b a))).
-        apply Remove_ab_trades_a_notIn.
-        auto. assert(In a (asks_of M) \/~In a (asks_of M)).
-        eauto. destruct H4. 
-        apply H. auto. apply ttqa_elim in H4. lia. 
-        destruct H0. lia. eauto.
-      }
-    }
-  }
-  {
-  apply Remove_ab_trades_IR. apply H.
-  }
- }
- split.
- { destruct H0. rewrite<- H0.
-  apply Remove_ab_trades_QM.
- }
- {
- apply Remove_ab_trades_NZT. auto.
- } Qed.
-
-(**************** case when the bid is partially traded *****************************)
-
-Fixpoint replace_bid (M:list transaction)(b b':order):=
-match M with 
-|nil => nil
-|m::M' =>match (b_eqb b (bid_of m)) with
-  |true => (Mk_transaction b' (ask_of m) (tquantity m) (tp m))::replace_bid M' b b'
-  |false =>m::replace_bid M' b b'
-  end
-end.
-
-Lemma replace_bid_elim1 (M:list transaction)(b b':order) :
-b=b' -> M = replace_bid M b b'.
-Proof.  intros. induction M as [|m' M']. simpl. auto.
-simpl. destruct (b_eqb b (bid_of m')) eqn: Hbm'.
-simpl. f_equal. subst b'. move /eqP in Hbm'.
-subst b. destruct m'. auto. auto. f_equal. auto. Qed.
-
-Lemma replace_bid_elim2 (M:list transaction)(b b':order) :
-b<>b' -> ~In b (bids_of (replace_bid M b b')).
-Proof.  intros. induction M as [|m' M']. simpl. auto.
-simpl. destruct (b_eqb b (bid_of m')) eqn: Hbm'.
-simpl. eauto. simpl. intro. destruct H0. move /eqP in Hbm'.
-subst b. elim Hbm'. auto. eauto. Qed.
-
-
-Lemma replace_bid_subset_ask (M:list transaction)(b b':order):
-asks_of M = asks_of (replace_bid M b b').
-Proof.
-revert b b'. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (b_eqb b (bid_of m')) eqn: Hbm'.
-simpl. f_equal. apply IHM'.
-simpl. f_equal. apply IHM'. Qed.
-
-Lemma replace_bid_subset_prices (M:list transaction)(b b':order):
-trade_prices_of M = trade_prices_of (replace_bid M b b').
-Proof.
-revert b b'. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (b_eqb b (bid_of m')) eqn: Hbm'.
-simpl. f_equal. apply IHM'.
-simpl. f_equal. apply IHM'. Qed.
-
-Lemma replace_bid_subset_bids (M:list transaction)(b b':order)(B:list order):
-bids_of M [<=] (b::B) -> bids_of (replace_bid M b b') [<=] (b'::B).
-Proof.
-revert b b' B. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (b_eqb b (bid_of m')) eqn: Hbm'.
-simpl. simpl in H. assert(bids_of M' [<=] b :: B). 
-eauto.  eapply IHM' with(b:=b)(b':=b') in H0.
-unfold Subset. intros. destruct H1.
-simpl. auto. eauto. simpl. simpl in H.
-eapply Subset_elim1 in H as H1.
-destruct H1. move /eqP in Hbm'. subst b.
-elim Hbm'. auto.
-eapply Subset_elim2 in H. eapply IHM' with (b:=b)(b':=b') in H.
-unfold Subset.
-intros. simpl. destruct H1. right. subst a. auto.
-unfold Subset in H. apply H in H1.
-destruct H1. left. auto. auto. Qed.
-
-Lemma replace_bid_matchable (M:list transaction)(b b':order):
-All_matchable M -> Nat.eqb (bp b) (bp b')-> All_matchable (replace_bid M b b').
-Proof. induction M as [|m M']. simpl. auto.
-unfold All_matchable.  
-simpl. intros. 
-destruct (b_eqb b (bid_of m)) eqn: Hm. 
-{
-  move /eqP in Hm. subst b.
-  destruct H1. 
-  { subst m0. simpl.
-    specialize (H m). 
-    destruct H. auto. move /eqP in H0. lia.
-    move /eqP in H0. lia. 
-  }
-  eapply IHM' in H0.
-  unfold All_matchable in H0. apply H0 in H1. auto.
-  unfold All_matchable. intros. 
-  specialize (H m1) as H3. 
-  destruct H3. right. auto. auto. lia.
-}
-{
-simpl in H1. destruct H1.
-move /eqP in Hm. subst m. auto.
-eapply IHM' in H0.  
-apply H0 in H1. auto. 
-unfold All_matchable. intros.
-specialize (H m1) as H3.
-destruct H3. auto. auto. lia.
-} Qed. 
-
-
-Lemma replace_bid_ttqb_b_b' (M:list transaction)(b b':order):
-~In b' (bids_of M) -> ttqb M b =ttqb (replace_bid M b b') b'.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (b_eqb b (bid_of m)) eqn: Hm. 
-{ simpl. destruct (b_eqb b' b') eqn:Hbb'.
-  intros. assert(~ In b' (bids_of M')).
-  unfold not in H. auto. apply IHM' in H0. lia.
-  move /eqP in Hbb'. elim Hbb'. auto.
-}
-{ simpl. destruct (b_eqb b' (bid_of m)) eqn:Hbm.
-  intros. unfold not in H. 
-  move /eqP in Hbm. symmetry in Hbm. 
-  destruct H. auto. 
-  intros. apply IHM'. auto.
-}
-Qed. 
-
-
-
-Lemma replace_bid_ttqb_b0 (M:list transaction)(b b' b0:order):
-b0<>b'/\b0<>b -> ttqb M b0 = ttqb (replace_bid M b b') b0.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (b_eqb b0 (bid_of m)) eqn: Hm. 
-{ simpl. destruct (b_eqb b (bid_of m)) eqn:Hbm.
-  intros. destruct H. 
-  move /eqP in Hbm. move /eqP in Hm. 
-  subst. elim H0. auto. 
-  intros. destruct H. simpl.
-  rewrite Hm. rewrite IHM'.
-  auto. lia. 
-}
-{ destruct (b_eqb b (bid_of m)) eqn:Hbm.
-  intros. simpl. destruct H. 
-  destruct (b_eqb b0 b') eqn:Hb.
-  move /eqP in Hb. subst. elim H. auto. 
-  apply IHM'. auto. simpl.
-  rewrite Hm. auto. 
-}
-Qed.
- 
-Lemma replace_bid_ttqa (M:list transaction)(a:order)(b b':order):
-ttqa M a = ttqa (replace_bid M b b') a.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (a_eqb a (ask_of m)) eqn: Hm. 
-{ destruct (b_eqb b (bid_of m)) eqn:Hbm.
-  simpl. rewrite Hm. lia. 
-  simpl.
-  rewrite Hm. lia.
-}
-{ destruct (b_eqb b (bid_of m)) eqn:Hbm.
-  simpl. rewrite Hm. lia. 
-  simpl.
-  rewrite Hm. lia.
-}
-Qed.
-
-Lemma replace_bid_Uniform (M:list transaction)(b b':order):
-Uniform M -> Uniform (replace_bid M b b').
-Proof. unfold Uniform. 
-assert(trade_prices_of M = trade_prices_of (replace_bid M b b')).
-eapply replace_bid_subset_prices.
-rewrite H. auto. Qed.
-
-
-Lemma replace_bid_IR (M:list transaction)(b b':order):
-Is_IR M -> b' >= b -> Is_IR (replace_bid M b b').
-Proof. induction M as [|m M']. simpl. auto.
-unfold Is_IR.  
-simpl. intros. 
-destruct (b_eqb b (bid_of m)) eqn: Hm. 
-{
-  move /eqP in Hm. subst b.
-  destruct H1. 
-  { subst m0. unfold rational.
-    simpl.
-    specialize (H m). 
-    destruct H. auto. 
-    lia.
-  }
-  eapply IHM' in H0.
-  unfold Is_IR in H0. apply H0 in H1. auto.
-  unfold Is_IR. intros. 
-  specialize (H m1) as H3. 
-  destruct H3. right. auto. auto.
-}
-{
-simpl in H1. destruct H1.
-move /eqP in Hm. subst m. auto.
-eapply IHM' in H0.  
-apply H0 in H1. auto. 
-unfold Is_IR. intros.
-specialize (H m1) as H3.
-destruct H3. auto. auto. 
-} Qed. 
-
-Lemma replace_bid_QM (M:list transaction)(b b':order):
-QM(M) = QM(replace_bid M b b').
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (b_eqb b (bid_of m)) eqn: Hm. simpl. lia.
-simpl. lia. Qed.
-
-Lemma replace_bid_NZT (M:list transaction)(b b':order)
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-(forall m : transaction, In m (replace_bid M b b') -> tquantity m > 0).
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (b_eqb b (bid_of m)) eqn: Hm. simpl.
-intros. destruct H. subst m0. simpl. eauto.
-apply IHM'. eauto. auto. 
-simpl. intros. destruct H. subst m0.
-apply NZT. eauto. apply IHM'.
-eauto. auto. Qed.
-
-Lemma replace_bid_matching1 (M:list transaction)(B:list order)(A:list order)(b b':order)
-(NDB:NoDup (b'::B)):
-matching_in (b::B) A M-> ttqb M b <= bq b' -> Nat.eqb (bp b) (bp b') ->
-matching_in (b'::B) A (replace_bid M b b').
-Proof. intros.  split.
-{ split. 
-  { apply replace_bid_matchable. apply H. auto. }
-  { split. 
-    { intros. destruct (b_eqb b b') eqn:Hbb'.
-      { move /eqP in Hbb'. apply replace_bid_elim1 with (M:=M) in Hbb'.
-        rewrite <- Hbb'. assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-        eauto. destruct H3. apply H. auto.
-        apply ttqb_elim in H3. lia.
-      }
-      { destruct (b_eqb b0 b') eqn:Hb0b';destruct (b_eqb b0 b) eqn:Hb0b.
-        {
-          move /eqP in Hb0b'. move /eqP in Hb0b.
-          move /eqP in Hbb'. subst. elim Hbb'. auto.
-        }
-        {
-          move /eqP in Hbb'. apply replace_bid_elim2 with (M:=M) in Hbb'.
-          move /eqP in Hb0b'. subst. replace (ttqb (replace_bid M b b') b')
-          with (ttqb M b). auto. apply replace_bid_ttqb_b_b'.
-          assert((bids_of M)[<=](b::B)). apply H. intro.
-          assert(In b' (b :: B)). eauto. destruct H5. 
-          move /eqP in Hb0b. subst. elim Hb0b. auto.
-          apply nodup_elim2 in NDB. eauto.
-        }
-        {
-          move /eqP in Hbb'. apply replace_bid_elim2 with (M:=M) in Hbb'.
-          move /eqP in Hb0b. subst. unfold not in Hbb'. 
-          apply Hbb' in H2. elim H2.
-        }
-        {
-          move /eqP in Hb0b'. move /eqP in Hb0b.
-          move /eqP in Hbb'. replace (ttqb (replace_bid M b b') b0) 
-          with (ttqb M b0). assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-          eauto. destruct H3. apply H. auto.
-          apply ttqb_elim in H3. lia.
-          eapply replace_bid_ttqb_b0. auto.
-         }
-       }
-    }
-    {
-    intros. replace (ttqa (replace_bid M b b') a) with (ttqa M a).
-    assert(In a (asks_of M)\/~In a (asks_of M)).
-    eauto. destruct H3. apply H. auto.
-    apply ttqa_elim in H3. lia. apply replace_bid_ttqa.
-    }
-  }
-}
-{
-  split.
-  { apply replace_bid_subset_bids. apply H. }
-  { rewrite <- replace_bid_subset_ask. apply H. }
-} Qed.
-
-Lemma exists_M0_reduced_bid_uniform (M:list transaction)(B:list order)(A:list order)(b:order)(a:order)
-(NDB:NoDup (idbs_of (b::B)))
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-Is_uniform M (b::B) (a::A) -> 
-ttq_ab M b a = (sq a) ->
-((bq b) > (sq a)) -> 
-exists M0, (Is_uniform M0 ((Mk_bid (bp b) (btime b) (bq b - (sq a)) (idb b))::B)
-A)
-/\(QM(M)=QM(M0) + (sq a)/\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros. 
-set (b':={| bp := b; btime := btime b; bq := bq b - sq a; idb := idb b |}).
-exists (replace_bid (Remove_ab_trades M b a) b b').
-split. 
-  { split.
-    { apply replace_bid_Uniform. apply Remove_ab_trades_Uniform. apply H. }
-    split. 
-    { apply replace_bid_matching1. apply idbs_of_nodup. simpl.
-      simpl in NDB. auto.
-      { split. (*Proof that matching *)
-        split.
-        apply Remove_ab_trades_matchable. apply H.
-        split. 
-        { intros. assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0).
-          apply Remove_ab_trades_ttq_le_b.
-          assert(ttqb M b0 <= bq b0). 
-          assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-          eauto. destruct H4. apply H. auto.
-          apply ttqb_elim in H4. lia. lia.
-        }
-        { intros. assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0).
-          apply Remove_ab_trades_ttq_le_a.
-          assert(ttqa M a0 <= sq a0). 
-          assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-          eauto. destruct H4. apply H. auto.
-          apply ttqa_elim in H4. lia. lia.
-        }
-        split. assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-        apply Remove_ab_trades_bids_subset.
-        assert(bids_of M [<=] (b::B)). apply H.
-        eauto.
-        assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-        apply Remove_ab_trades_asks_subset.
-        assert(asks_of M [<=] (a::A)).  apply H.
-        assert(~In a (asks_of (Remove_ab_trades M b a))).
-        apply Remove_ab_trades_a_notIn. auto. 
-        assert(In a (asks_of M)\/~In a (asks_of M)).
-        eauto. destruct H4. apply H. auto.
-        apply ttqa_elim in H4. lia. lia.
-        assert(asks_of (Remove_ab_trades M b a) [<=] (a::A)).
-        eauto. eauto.
-      }        
-      subst b'. 
-      simpl. assert (ttqb M b = (ttq_ab M b a) + (ttqb (Remove_ab_trades M b a) b)).
-      apply Remove_ab_trades_correct2b. 
-      assert(In b (bids_of M)\/~In b (bids_of M)).
-      eauto. destruct H3.
-      assert(ttqb M b <= bq b). apply H. auto. lia.
-       apply ttqb_elim in H3. lia. subst b'. simpl. auto. 
-    }
-    { apply replace_bid_IR. apply Remove_ab_trades_IR. apply H.
-      subst b'. simpl. auto.
-    }
-  }
-  split.
-{ 
-  replace (QM (replace_bid (Remove_ab_trades M b a) b b')) with 
-  (QM (Remove_ab_trades M b a)). 
-  assert(QM M = QM (Remove_ab_trades M b a) + ttq_ab M b a). 
-  apply Remove_ab_trades_QM. lia.
-  apply replace_bid_QM.
-}
-{
-apply replace_bid_NZT.
-apply Remove_ab_trades_NZT.
-auto.
-} Qed.
-   
-
-Lemma exists_M0_reduced_bid_matching (M:list transaction)(B:list order)(A:list order)(b:order)(a:order)
-(NDB:NoDup (idbs_of (b::B)))
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-matching_in (b::B) (a::A) M-> 
-ttq_ab M b a = (sq a) ->
-((bq b) > (sq a)) -> 
-Is_IR M ->
-exists M0, (matching_in ((Mk_bid (bp b) (btime b) (bq b - (sq a)) (idb b))::B)
-A M0)
-/\(QM(M)=QM(M0) + (sq a)/\Is_IR M0 /\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros. 
-set (b':={| bp := b; btime := btime b; bq := bq b - sq a; idb := idb b |}).
-exists (replace_bid (Remove_ab_trades M b a) b b').
-split. { apply replace_bid_matching1. apply idbs_of_nodup. simpl.
-      simpl in NDB. auto.
-      { split. (*Proof that matching *)
-        split.
-        apply Remove_ab_trades_matchable. apply H.
-        split. 
-        { intros. assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0).
-          apply Remove_ab_trades_ttq_le_b.
-          assert(ttqb M b0 <= bq b0). 
-          assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-          eauto. destruct H5. apply H. auto.
-          apply ttqb_elim in H5. lia. lia.
-        }
-        { intros. assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0).
-          apply Remove_ab_trades_ttq_le_a.
-          assert(ttqa M a0 <= sq a0). 
-          assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-          eauto. destruct H5. apply H. auto.
-          apply ttqa_elim in H5. lia. lia.
-        }
-        split. assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-        apply Remove_ab_trades_bids_subset.
-        assert(bids_of M [<=] (b::B)). apply H.
-        eauto.
-        assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-        apply Remove_ab_trades_asks_subset.
-        assert(asks_of M [<=] (a::A)).  apply H.
-        assert(~In a (asks_of (Remove_ab_trades M b a))).
-        apply Remove_ab_trades_a_notIn. auto. 
-        assert(In a (asks_of M)\/~In a (asks_of M)).
-        eauto. destruct H5. apply H. auto.
-        apply ttqa_elim in H5. lia. lia.
-        assert(asks_of (Remove_ab_trades M b a) [<=] (a::A)).
-        eauto. eauto.
-      }        
-      subst b'. 
-      simpl. assert (ttqb M b = (ttq_ab M b a) + (ttqb (Remove_ab_trades M b a) b)).
-      apply Remove_ab_trades_correct2b. 
-      assert(In b (bids_of M)\/~In b (bids_of M)).
-      eauto. destruct H4.
-      assert(ttqb M b <= bq b). apply H. auto. lia.
-       apply ttqb_elim in H4. lia. subst b'. simpl. auto. 
-    }
-    split.
-    { 
-     replace (QM (replace_bid (Remove_ab_trades M b a) b b')) with 
-     (QM (Remove_ab_trades M b a)). 
-     assert(QM M = QM (Remove_ab_trades M b a) + ttq_ab M b a). 
-     apply Remove_ab_trades_QM. lia.
-     apply replace_bid_QM.
-   }
-   split.
-   { apply replace_bid_IR. apply Remove_ab_trades_IR. apply H2.
-      subst b'. simpl. auto.
-   }
-   apply replace_bid_NZT.
-apply Remove_ab_trades_NZT.
-auto.
-Qed.
-
-
-
-
-
-
-
-
-
-(**************** case when the ask is partially traded *****************************)
-
-
-
-
-Fixpoint replace_ask  (M:list transaction)(a a':order):=
-match M with 
-|nil => nil
-|m::M' =>match (a_eqb a (ask_of m)) with
-  |true => (Mk_transaction (bid_of m) a' (tquantity m) (tp m))::replace_ask M' a a'
-  |false =>m::replace_ask M' a a'
-  end
-end.
-
-Lemma replace_ask_elim1 (M:list transaction)(a a':order) :
-a=a' -> M = replace_ask M a a'.
-Proof.  intros. induction M as [|m' M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m')) eqn: Hbm'.
-simpl. f_equal. subst a'. move /eqP in Hbm'.
-subst a. destruct m'. auto. auto. f_equal. auto. Qed.
-
-Lemma replace_ask_elim2 (M:list transaction)(a a':order) :
-a<>a' -> ~In a (asks_of (replace_ask M a a')).
-Proof.  intros. induction M as [|m' M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m')) eqn: Hbm'.
-simpl. eauto. simpl. intro. destruct H0. move /eqP in Hbm'.
-subst a. elim Hbm'. auto. eauto. Qed.
-
-
-Lemma replace_ask_subset_bid (M:list transaction)(a a':order):
-bids_of M = bids_of (replace_ask M a a').
-Proof.
-revert a a'. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (a_eqb a (ask_of m')) eqn: Hbm'.
-simpl. f_equal. apply IHM'.
-simpl. f_equal. apply IHM'. Qed.
-
-Lemma replace_ask_subset_prices (M:list transaction)(a a':order):
-trade_prices_of M = trade_prices_of (replace_ask M a a').
-Proof.
-revert a a'. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (a_eqb a (ask_of m')) eqn: Hbm'.
-simpl. f_equal. apply IHM'.
-simpl. f_equal. apply IHM'. Qed.
-
-Lemma replace_ask_subset_asks (M:list transaction)(a a':order)(A:list order):
-asks_of M [<=] (a::A) -> asks_of (replace_ask M a a') [<=] (a'::A).
-Proof.
-revert a a' A. induction M as [|m' M']. simpl. auto.
-intros. simpl. destruct (a_eqb a (ask_of m')) eqn: Hbm'.
-simpl. simpl in H. assert(asks_of M' [<=] a :: A). 
-eauto.  eapply IHM' with(a:=a)(a':=a') in H0.
-unfold Subset. intros. destruct H1.
-simpl. auto. eauto. simpl. simpl in H.
-eapply Subset_elim1 in H as H1.
-destruct H1. move /eqP in Hbm'. subst a.
-elim Hbm'. auto.
-eapply Subset_elim2 in H. eapply IHM' with (a:=a)(a':=a') in H.
-unfold Subset.
-intros. simpl. destruct H1. right. subst a0. auto.
-unfold Subset in H. apply H in H1.
-destruct H1. left. auto. auto. Qed.
-
-Lemma replace_ask_matchable (M:list transaction)(a a':order):
-All_matchable M -> Nat.eqb (sp a) (sp a')-> All_matchable (replace_ask M a a').
-Proof. induction M as [|m M']. simpl. auto.
-unfold All_matchable.  
-simpl. intros. 
-destruct (a_eqb a (ask_of m)) eqn: Hm. 
-{
-  move /eqP in Hm. subst a.
-  destruct H1. 
-  { subst m0. simpl.
-    specialize (H m). 
-    destruct H. auto. move /eqP in H0. lia.
-    move /eqP in H0. lia. 
-  }
-  eapply IHM' in H0.
-  unfold All_matchable in H0. apply H0 in H1. auto.
-  unfold All_matchable. intros. 
-  specialize (H m1) as H3. 
-  destruct H3. right. auto. auto. lia.
-}
-{
-simpl in H1. destruct H1.
-move /eqP in Hm. subst m. auto.
-eapply IHM' in H0.  
-apply H0 in H1. auto. 
-unfold All_matchable. intros.
-specialize (H m1) as H3.
-destruct H3. auto. auto. lia.
-} Qed. 
-
-
-Lemma replace_ask_ttqa_a_a' (M:list transaction)(a a':order):
-~In a' (asks_of M) -> ttqa M a =ttqa (replace_ask M a a') a'.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (a_eqb a (ask_of m)) eqn: Hm. 
-{ simpl. destruct (a_eqb a' a') eqn:Hbb'.
-  intros. assert(~ In a' (asks_of M')).
-  unfold not in H. auto. apply IHM' in H0. lia.
-  move /eqP in Hbb'. elim Hbb'. auto.
-}
-{ simpl. destruct (a_eqb a' (ask_of m)) eqn:Hbm.
-  intros. unfold not in H. 
-  move /eqP in Hbm. symmetry in Hbm. 
-  destruct H. auto. 
-  intros. apply IHM'. auto.
-}
-Qed. 
-
-
-
-Lemma replace_ask_ttqa_a0 (M:list transaction)(a a' a0:order):
-a0<>a'/\a0<>a -> ttqa M a0 = ttqa (replace_ask M a a') a0.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (a_eqb a0 (ask_of m)) eqn: Hm. 
-{ simpl. destruct (a_eqb a (ask_of m)) eqn:Hbm.
-  intros. destruct H. 
-  move /eqP in Hbm. move /eqP in Hm. 
-  subst. elim H0. auto. 
-  intros. destruct H. simpl.
-  rewrite Hm. rewrite IHM'.
-  auto. lia. 
-}
-{ destruct (a_eqb a (ask_of m)) eqn:Hbm.
-  intros. simpl. destruct H. 
-  destruct (a_eqb a0 a') eqn:Hb.
-  move /eqP in Hb. subst. elim H. auto. 
-  apply IHM'. auto. simpl.
-  rewrite Hm. auto. 
-}
-Qed.
- 
-Lemma replace_ask_ttqb (M:list transaction)(b:order)(a a':order):
-ttqb M b = ttqb (replace_ask M a a') b.
-Proof. induction M as [|m M']. simpl. auto.
-simpl. 
-destruct (b_eqb b (bid_of m)) eqn: Hm. 
-{ destruct (a_eqb a (ask_of m)) eqn:Hbm.
-  simpl. rewrite Hm. lia. 
-  simpl.
-  rewrite Hm. lia.
-}
-{ destruct (a_eqb a (ask_of m)) eqn:Hbm.
-  simpl. rewrite Hm. lia. 
-  simpl.
-  rewrite Hm. lia.
-}
-Qed.
-
-Lemma replace_ask_Uniform (M:list transaction)(a a':order):
-Uniform M -> Uniform (replace_ask M a a').
-Proof. unfold Uniform. 
-assert(trade_prices_of M = trade_prices_of (replace_ask M a a')).
-eapply replace_ask_subset_prices.
-rewrite H. auto. Qed.
-
-
-Lemma replace_ask_IR (M:list transaction)(a a':order):
-Is_IR M -> a' <= a -> Is_IR (replace_ask M a a').
-Proof. induction M as [|m M']. simpl. auto.
-unfold Is_IR.  
-simpl. intros. 
-destruct (a_eqb a (ask_of m)) eqn: Hm. 
-{
-  move /eqP in Hm. subst a.
-  destruct H1. 
-  { subst m0. unfold rational.
-    simpl.
-    specialize (H m). 
-    destruct H. auto. 
-    lia.
-  }
-  eapply IHM' in H0.
-  unfold Is_IR in H0. apply H0 in H1. auto.
-  unfold Is_IR. intros. 
-  specialize (H m1) as H3. 
-  destruct H3. right. auto. auto.
-}
-{
-simpl in H1. destruct H1.
-move /eqP in Hm. subst m. auto.
-eapply IHM' in H0.  
-apply H0 in H1. auto. 
-unfold Is_IR. intros.
-specialize (H m1) as H3.
-destruct H3. auto. auto. 
-} Qed. 
-
-Lemma replace_ask_QM (M:list transaction)(a a':order):
-QM(M) = QM(replace_ask M a a').
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m)) eqn: Hm. simpl. lia.
-simpl. lia. Qed.
-
-Lemma replace_ask_NZT (M:list transaction)(a a':order)
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-(forall m : transaction, In m (replace_ask M a a') -> tquantity m > 0).
-Proof. induction M as [|m M']. simpl. auto.
-simpl. destruct (a_eqb a (ask_of m)) eqn: Hm. simpl.
-intros. destruct H. subst m0. simpl. eauto.
-apply IHM'. eauto. auto. 
-simpl. intros. destruct H. subst m0.
-apply NZT. eauto. apply IHM'.
-eauto. auto. Qed.
-
-Lemma replace_ask_matching1 (M:list transaction)(B:list order)(A:list order)(a a':order)
-(NDA:NoDup (a'::A)):
-matching_in B (a::A) M-> ttqa M a <= sq a' -> Nat.eqb (sp a) (sp a') ->
-matching_in B (a'::A) (replace_ask M a a').
-Proof. intros.  split.
-{ split. 
-  { apply replace_ask_matchable. apply H. auto. }
-  { split. 
-    {
-    intros. replace (ttqb (replace_ask M a a') b) with (ttqb M b).
-    assert(In b (bids_of M)\/~In b (bids_of M)).
-    eauto. destruct H3. apply H. auto.
-    apply ttqb_elim in H3. lia. apply replace_ask_ttqb.
-    }
-    { intros. destruct (a_eqb a a') eqn:Hbb'.
-      { move /eqP in Hbb'. apply replace_ask_elim1 with (M:=M) in Hbb'.
-        rewrite <- Hbb'. assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-        eauto. destruct H3. apply H. auto.
-        apply ttqa_elim in H3. lia.
-      }
-      { destruct (a_eqb a0 a') eqn:Hb0b';destruct (a_eqb a0 a) eqn:Hb0b.
-        {
-          move /eqP in Hb0b'. move /eqP in Hb0b.
-          move /eqP in Hbb'. subst. elim Hbb'. auto.
-        }
-        {
-          move /eqP in Hbb'. apply replace_ask_elim2 with (M:=M) in Hbb'.
-          move /eqP in Hb0b'. subst. replace (ttqa (replace_ask M a a') a')
-          with (ttqa M a). auto. apply replace_ask_ttqa_a_a'.
-          assert((asks_of M)[<=](a::A)). apply H. intro.
-          assert(In a' (a :: A)). eauto. destruct H5. 
-          move /eqP in Hb0b. subst. elim Hb0b. auto.
-          apply nodup_elim2 in NDA. eauto.
-        }
-        {
-          move /eqP in Hbb'. apply replace_ask_elim2 with (M:=M) in Hbb'.
-          move /eqP in Hb0b. subst. unfold not in Hbb'. 
-          apply Hbb' in H2. elim H2.
-        }
-        {
-          move /eqP in Hb0b'. move /eqP in Hb0b.
-          move /eqP in Hbb'. replace (ttqa (replace_ask M a a') a0) 
-          with (ttqa M a0). assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-          eauto. destruct H3. apply H. auto.
-          apply ttqa_elim in H3. lia.
-          eapply replace_ask_ttqa_a0. auto.
-         }
-       }
-    }
-  }
-}
-{
-  split.
-  { rewrite <- replace_ask_subset_bid. apply H. }
-  { apply replace_ask_subset_asks. apply H. }
-
-} Qed.
-
-
-Lemma exists_M0_reduced_ask_matching (M:list transaction)(B:list order)(A:list order)(b:order)(a:order)
-(NDA:NoDup (idas_of (a::A)))
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-matching_in (b::B) (a::A) M-> 
-ttq_ab M b a = (bq b) ->
-((sq a) > (bq b)) -> 
-Is_IR M ->
-exists M0, (matching_in B
-((Mk_ask (sp a) (stime a) (sq a - (bq b)) (ida a))::A) M0)
-/\(QM(M)=QM(M0) + (bq b)/\Is_IR M0/\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros. 
-set (a':={| sp := a; stime := stime a; sq := sq a - bq b; ida := ida a |}).
-exists (replace_ask (Remove_ab_trades M b a) a a').
-split. { apply replace_ask_matching1. apply idas_of_nodup. simpl.
-      simpl in NDA. auto.
-      { split. (*Proof that matching *)
-        split.
-        apply Remove_ab_trades_matchable. apply H.
-        split. 
-        { intros. assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0).
-          apply Remove_ab_trades_ttq_le_b.
-          assert(ttqb M b0 <= bq b0). 
-          assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-          eauto. destruct H5. apply H. auto.
-          apply ttqb_elim in H5. lia. lia.
-        }
-        { intros. assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0).
-          apply Remove_ab_trades_ttq_le_a.
-          assert(ttqa M a0 <= sq a0). 
-          assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-          eauto. destruct H5. apply H. auto.
-          apply ttqa_elim in H5. lia. lia.
-        }
-        split. 
-        { assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-          apply Remove_ab_trades_bids_subset.
-          assert(bids_of M [<=] (b::B)).  apply H.
-          assert(~In b (bids_of (Remove_ab_trades M b a))).
-          apply Remove_ab_trades_b_notIn. auto. 
-          assert(In b (bids_of M)\/~In b (bids_of M)).
-          eauto. destruct H5. apply H. auto.
-          apply ttqb_elim in H5. lia. lia.
-          assert(bids_of (Remove_ab_trades M b a) [<=] (b::B)).
-          eauto. eauto.
-        }
-        { assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-          apply Remove_ab_trades_asks_subset.
-          assert(asks_of M [<=] (a::A)). apply H.
-          eauto.
-        }        
-      }        
-      subst a'. 
-      simpl. assert (ttqa M a = (ttq_ab M b a) + (ttqa (Remove_ab_trades M b a) a)).
-      apply Remove_ab_trades_correct2a. 
-      assert(In a (asks_of M)\/~In a (asks_of M)).
-      eauto. destruct H4.
-      assert(ttqa M a <= sq a). apply H. auto. lia.
-       apply ttqa_elim in H4. lia. subst a'. simpl. auto. 
-    }
-    split.
-    { 
-     replace (QM (replace_ask (Remove_ab_trades M b a) a a')) with 
-     (QM (Remove_ab_trades M b a)). 
-     assert(QM M = QM (Remove_ab_trades M b a) + ttq_ab M b a). 
-     apply Remove_ab_trades_QM. lia.
-     apply replace_ask_QM.
-   }
-   split.
-   { apply replace_ask_IR. apply Remove_ab_trades_IR. apply H2.
-      subst a'. simpl. auto.
-   }
-   apply replace_ask_NZT.
-apply Remove_ab_trades_NZT.
-auto.
-Qed.
-
-
-
-
-
-Lemma exists_M0_reduced_ask_uniform (M:list transaction)(B:list order)(A:list order)(b:order)(a:order)
-(NDA:NoDup (idas_of (a::A)))
-(NZT:forall m : transaction, In m M -> tquantity m > 0):
-Is_uniform M (b::B) (a::A) -> 
-ttq_ab M b a = (bq b) ->
-((sq a) > (bq b)) -> 
-exists M0, (Is_uniform M0 B
-((Mk_ask (sp a) (stime a) (sq a - (bq b)) (ida a))::A))
-/\(QM(M)=QM(M0) + (bq b)/\
-(forall m : transaction, In m M0 -> tquantity m > 0)).
-Proof. intros. 
-set (a':={| sp := a; stime := stime a; sq := sq a - bq b; ida := ida a |}).
-exists (replace_ask (Remove_ab_trades M b a) a a').
-split. 
-  { split.
-    { apply replace_ask_Uniform. apply Remove_ab_trades_Uniform. apply H. }
-    split. 
-{ apply replace_ask_matching1. apply idas_of_nodup. simpl.
-      simpl in NDA. auto.
-      { split. (*Proof that matching *)
-        split.
-        apply Remove_ab_trades_matchable. apply H.
-        split. 
-        { intros. assert(ttqb (Remove_ab_trades M b a) b0 <= ttqb M b0).
-          apply Remove_ab_trades_ttq_le_b.
-          assert(ttqb M b0 <= bq b0). 
-          assert(In b0 (bids_of M)\/~In b0 (bids_of M)).
-          eauto. destruct H4. apply H. auto.
-          apply ttqb_elim in H4. lia. lia.
-        }
-        { intros. assert(ttqa (Remove_ab_trades M b a) a0 <= ttqa M a0).
-          apply Remove_ab_trades_ttq_le_a.
-          assert(ttqa M a0 <= sq a0). 
-          assert(In a0 (asks_of M)\/~In a0 (asks_of M)).
-          eauto. destruct H4. apply H. auto.
-          apply ttqa_elim in H4. lia. lia.
-        }
-        split. 
-        { assert(bids_of (Remove_ab_trades M b a) [<=] bids_of M).
-          apply Remove_ab_trades_bids_subset.
-          assert(bids_of M [<=] (b::B)).  apply H.
-          assert(~In b (bids_of (Remove_ab_trades M b a))).
-          apply Remove_ab_trades_b_notIn. auto. 
-          assert(In b (bids_of M)\/~In b (bids_of M)).
-          eauto. destruct H4. apply H. auto.
-          apply ttqb_elim in H4. lia. lia.
-          assert(bids_of (Remove_ab_trades M b a) [<=] (b::B)).
-          eauto. eauto.
-        }
-        { assert(asks_of (Remove_ab_trades M b a) [<=] asks_of M).
-          apply Remove_ab_trades_asks_subset.
-          assert(asks_of M [<=] (a::A)). apply H.
-          eauto.
-        }
-      }
-      subst a'. 
-      simpl. assert (ttqa M a = (ttq_ab M b a) + (ttqa (Remove_ab_trades M b a) a)).
-      apply Remove_ab_trades_correct2a. 
-      assert(In a (asks_of M)\/~In a (asks_of M)).
-      eauto. destruct H3.
-      assert(ttqa M a <= sq a). apply H. auto. lia.
-      apply ttqa_elim in H3. lia. subst a'. simpl. auto. 
-    }
-   { apply replace_ask_IR. apply Remove_ab_trades_IR. apply H.
-      subst a'. simpl. auto.
-   }
-   }
-   split.
-    { 
-     replace (QM (replace_ask (Remove_ab_trades M b a) a a')) with 
-     (QM (Remove_ab_trades M b a)). 
-     assert(QM M = QM (Remove_ab_trades M b a) + ttq_ab M b a). 
-     apply Remove_ab_trades_QM. lia.
-     apply replace_ask_QM.
-   }
-   apply replace_ask_NZT.
-   apply Remove_ab_trades_NZT.
-   auto.
-Qed.
 
 End Transform.
-*)

@@ -298,6 +298,14 @@ destruct H1. induction A. auto. apply HdRel_inv in H2.
 apply HdRel_cons. unfold acompetitive in H2. unfold acompetitive. rewrite <- H.  rewrite <- H0.
 auto. Qed.
 
+Lemma SortedreducedA_rev (A: list order)(a a': order):
+(oprice a = oprice a') -> (otime a = otime a') -> 
+Sorted rev_acompetitive (a::A) -> Sorted rev_acompetitive (a'::A).
+Proof. intros. apply Sorted_inv in H1. apply Sorted_cons. apply H1.
+destruct H1. induction A. auto. apply HdRel_inv in H2.
+apply HdRel_cons. unfold rev_acompetitive in H2. unfold rev_acompetitive.
+rewrite <- H.  rewrite <- H0. auto. Qed.
+
 Lemma SortedreducedMD (M: list transaction)(m m': transaction):
 (tprice m = tprice m') -> Sorted dec_price (m::M) -> Sorted dec_price (m'::M).
 Proof. intros. apply Sorted_inv in H0. apply Sorted_cons. apply H0.

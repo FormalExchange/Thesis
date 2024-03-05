@@ -24,20 +24,3 @@ type the following command from your terminal:
 4. The Bound.v file contains combinatorial results on matchings. 
 5. The Uniqueness.v file contains uniqueness related results.
 
-Following are some of the important observations about some of the pre-conditions.
-
-Note1: It is natural to believe that the bids and asks comes with 
-non-zero quantity. It is easy to ensure that all the zero quantity bids
-or zero quantity asks are removed from the system on arrival.
-These assertions below are denoted as 'NZB' and 'NZA' respectively.
-
-Note2: Since no bid or asks is of non-zero quantity a matching can be
-assumed to have non-zero transactions. This assertion is represented as
-'NZT'.
-
-Note3: Each bid or ask is assigned a unique time stamp and unique id 
-on arrival. So it is easy to see that we do not have two bids or asks with 
-same ids in the lists B and A. These assertions are denoted as 'NDA' and 'NDB'.
-
-Note4: (Similar to Note3) since a bid or ask has a unique time-stamp, we have two natural hypothesis that not two different orders for same securities should be 
-assigned same time-stamp. This is natural, otherwise it is difficult to break the tie for the competitiveness in the markets.

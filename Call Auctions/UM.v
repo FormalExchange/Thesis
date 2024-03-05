@@ -134,7 +134,7 @@ Definition t0:= Mk_transaction 0 0 0 1 not1.
 
 Definition Last_Transaction_Price M:= tprice ((last M t0)).
 
-Lemma exists_opt_k (B:list order)(A:list order)(b:order)(a:order):
+Lemma exists_opt_k (B:list order)(A:list order)(b:order)(a:order)(adm:admissible (b::B) (a::A)):
 Sorted bcompetitive (b::B) -> 
 Sorted acompetitive (a::A) -> 
 (forall k M,
@@ -147,7 +147,7 @@ Vol(M)>=(min (oquantity b) (oquantity a)) ->
 (exists M0, (Is_uniform M0 (b::B) (a::A))/\
 ((min (oquantity b) (oquantity a)) - Qty M0 (id b) (id a) = 0)/\
 Vol(M)=Vol(M0))).
-Proof. revert B A b a. induction k. 
+Proof. revert B A b a adm. induction k. 
        { intros M Uni_M price_ab HvM HQa. exists M. split;auto. split;auto.
          apply HQa. }
        { intros M Uni_M price_ab HvM HQa. destruct HQa as [HQa HQb].
@@ -163,15 +163,16 @@ Proof. revert B A b a. induction k.
             assert(Qty M (id b) (id a) < Qty_ask M (id a)). lia.
             apply Qty_lt_Qty_ask_m_exists in H4.
             destruct H3 as [m1 H3]. destruct H4 as [m2 H4]. destruct H3. destruct H5. destruct H4.
-            destruct H7. apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2) in Uni_M.
+            destruct H7. apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2)(b:=b)(a:=a) in Uni_M.
             apply IHk in Uni_M. destruct Uni_M as [M0 Uni_M]. destruct Uni_M as [U1 U2].
             destruct U2 as [U2 U3]. exists M0. split. auto. split. rewrite <- H1. auto.
             auto. rewrite (increase_ab_quantity_Vol _ m1 m2 b a). all:auto.  intro.
-            subst m1. lia. rewrite <- (increase_ab_quantity_Vol _ m1 m2 b a). all:auto. 
+            subst m1. lia. rewrite <- (increase_ab_quantity_Vol _ m1 m2 b a). all:auto.  
             intro;subst m1;lia. split. 
             rewrite (increase_ab_quantity_Qty_ask _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. 
             split. rewrite (increase_ab_quantity_Qty_bid _ m1 m2 b b a). all:auto. intro;subst m1;lia. lia.
-            rewrite (increase_ab_quantity_extra _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. intro;subst m1;lia.
+            rewrite (increase_ab_quantity_extra _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. apply adm. 
+            apply adm.  intro;subst m1;lia.
           }
           { assert ((min (oquantity b) (oquantity a)) = oquantity a). 
             eapply min_r. move /leP in Hab;lia.
@@ -183,7 +184,7 @@ Proof. revert B A b a. induction k.
             assert(Qty M (id b) (id a) < Qty_ask M (id a)). lia.
             apply Qty_lt_Qty_ask_m_exists in H4.
             destruct H3 as [m1 H3]. destruct H4 as [m2 H4]. destruct H3. destruct H5. destruct H4.
-            destruct H7.  apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2) in Uni_M.
+            destruct H7.  apply increase_ab_quantity_Is_uniform with (m1:=m1)(m2:=m2)(b:=b)(a:=a) in Uni_M.
             apply IHk in Uni_M. destruct Uni_M as [M0 Uni_M]. destruct Uni_M as [U1 U2].
             destruct U2 as [U2 U3]. exists M0. split. auto. split. rewrite <- H1. auto.
             auto. rewrite (increase_ab_quantity_Vol _ m1 m2 b a). all:auto.  intro.
@@ -191,7 +192,8 @@ Proof. revert B A b a. induction k.
             intro;subst m1;lia. split. 
             rewrite (increase_ab_quantity_Qty_ask _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. 
             split. rewrite (increase_ab_quantity_Qty_bid _ m1 m2 b b a). all:auto. intro;subst m1;lia. lia.
-            rewrite (increase_ab_quantity_extra _ m1 m2 b a). all:auto. intro;subst m1;lia. lia. intro;subst m1;lia.
+            rewrite (increase_ab_quantity_extra _ m1 m2 b a). all:auto. intro;subst m1;lia. lia.
+            apply adm. apply adm. intro;subst m1;lia.
           } } Qed.
 
 (*Set M:=FAIR M in this Lemma. Also prove that FAIR does not change uniform property*)
@@ -225,7 +227,7 @@ intros. destruct ((min (oquantity b) (oquantity a)) - Qty M' (id b) (id a)) eqn:
   assert(HQa:= (Qty_le_Qty_ask M0 (id b) (id a))). 
   assert(Qty_bid M0 (id b) <= (oquantity b)). apply H1. auto.
   assert(Qty_ask M0 (id a) <= (oquantity a)). apply H1. auto. lia. 
-  subst M'. lia. all:auto. split. 
+  subst M'. lia. all:auto. unfold admissible. auto. split.
   apply Fair_Uniform. apply H3. subst M'.
   apply H6. subst M'. lia. split. subst M'. apply Is_fair_ab_full. split. unfold admissible. auto.
   split. apply H3. split. auto. split. auto. lia.
